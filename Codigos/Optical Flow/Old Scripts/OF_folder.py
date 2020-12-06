@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+
+import numpy as np
+import cv2 as cv2
+import sys
+import gflags
+import os
+import glob
+
+global mini
+mini=0
+global maxi
+maxi=0
+
+
+#MAX 43.46
+
+def flowToDisplay (flow,maxi,mini):
+
+	rgb=np.zeros((480,640,1),dtype=np.float32)
+	
+	mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
+	
+	'''dup=[]
+	for k in mag:
+   		for i in k:
+        		dup.append(i)
+
+	if max(dup) > maxi:
+
+		maxi=max(dup)
+	else:
+		maxi=maxi
+
+	if min(dup) < mini:
+
+		mani=min(dup)
+	else:
+		mini=mini'''
+	
+
+	if np.max(mag)> maxi:
+		maxi=np.max(mag)
+	else:
+		maxi=maxi
+	print maxi
+	mag=mag/35
+	rgb=mag
+	#hsv = rgb
+	#hsv[...,0] = ang*180/np.pi/2
+	#hsv[...,1] = 1
+	#rgb = cv2.normalize(mag,None,0,1,cv2.NORM_MINMAX) 
+	#bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+
+	return [rgb,maxi,mini]
+
+##########################################################################
+##########################################################################
+
+ResRatio=4
+#prefolder='training'
+#folder='GOPR0278'
+imagefolder='/home/tev/Desktop/LOG/VideosDay-1/3/images'
+destfolder='/home/tev/Desktop/LOG/VideosDay-1/3/images_of'
+if not os.path.exists(destfolder):
+	os.makedirs(destfolder)
+ofname=''
+prev=np.zeros((720,960))
+uflow=np.zeros((720,960))
+
+mini=0
+maxo=0
+
+list = os.listdir(imagefolder) # dir is your directory path
+number_files = len(list)
+#print list
+frames=glob.glob('/home/tev/Desktop/LOG/VideosDay-1/3/images/*')
+frames=sorted(frames)
+print frames
+maxi=0
+
+	
+#print max
+frameRGB= cv2.imread('/home/tev/Desktop/LOG/VideosDay-1/3/images/frame_00001.png.jpg') 
+h,w= frameRGB.shape[:2]
+ResRatio=1
+print h
+count=0
+for fr in frames:
+	count+=1
+	#frname='frame_{0:05d}'.format(fr)+'.png.jpg'
+	ofname=destfolder+'/frame_{0:05d}'.format(count)+'_of.jpg'
+	
+
+	frameRGB= cv2.imread(fr)  
+	#print fr
+	if frameRGB is None:
+		print ('ERROR, photo missing n: '+str(fr))
+
+	else:
+	
+	     
+             
+	     frameGray=cv2.cvtColor(frameRGB, cv2.COLOR_BGR2GRAY)
+             frameGray=cv2.resize(frameGray,(h/ResRatio, w/ResRatio),1) 
+	     prev=cv2.resize(prev,(h/ResRatio, w/ResRatio),1) 
+	
+	     if prev.size!=0:
+		uflow=cv2.calcOpticalFlowFarneback(prev,frameGray,None,0.4,1,12,2,8,1,0);
+		uflow=np.array(uflow)
+		[rgb,maxo,mini]=flowToDisplay(uflow,maxo,mini)
+		
+		rgb[rgb > 0.9] = 1
+		print np.max(rgb)
+		imageout1=cv2.resize(rgb,(w,h),1) 
+		imageout=(imageout1*255).astype(dtype=np.uint8)
+		#print imageout.shape
+		cv2.imwrite(ofname,imageout)
+		cv2.imshow('image',imageout)
+		cv2.waitKey(1)
+	prev=frameGray
+
+ofname=destfolder+'/frame_{0:05d}'.format(count)+'.jpg'
+cv2.imwrite(ofname,imageout)
+
