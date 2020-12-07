@@ -11,6 +11,7 @@ import numpy as np
 from RandomTrajectory import Trajectory_Generation
 from mpl_toolkits.mplot3d import Axes3D
 
+
 plt.style.use('ggplot')
 
 def update_line(hl, new_data):
@@ -60,15 +61,14 @@ class FollowTrajectory:
         
         for point in trajectory:
             print (point)
-            a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2)
+            a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
             data=self.client.getMultirotorState()
             collision=self.client.simGetCollisionInfo()
-            
+            print (a._set_flag)
             while not(a._set_flag) and not(collision.has_collided):
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
                 position = data.kinematics_estimated.position
-                print (collision)
                 update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
                 plt.pause(0.25)
            
