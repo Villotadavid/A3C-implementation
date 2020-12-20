@@ -7,6 +7,7 @@ Created on Tue Dec 15 21:13:47 2020
 import numpy as np
 import cv2
 import airsim
+import time
 
 def find_center(stereo,contour):
 	(xmax,ymax)=stereo.shape
@@ -30,33 +31,31 @@ def find_center(stereo,contour):
 
 	return (x,y)
 
-def Drone_Vision(png_image):
-
-    t, png_image = cv2.threshold(png_image, 240, 255, cv2.THRESH_BINARY)
-    #png_image = cv2.GaussianBlur(png_image, (7, 7), 3)
-    #t, png_image = cv2.threshold(png_image, 0, 255, cv2.THRESH_BINARY)
-    #cv2.imshow('img',png_image)
-    #cv2.waitKey(2)
-
+def Drone_Vision(self):
+    png_image=np.float32(get_image(self))
+    t, png_image = cv2.threshold(png_image, 15, 255, cv2.THRESH_BINARY)
+    png_image = cv2.GaussianBlur(png_image, (3, 3), 3)
+    t, png_image = cv2.threshold(png_image, 0, 255, cv2.THRESH_BINARY)
     contours, _  = cv2.findContours(np.uint8(png_image), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     maxArea=0
-
-    for c in contours:
-        area = cv2.contourArea(c)
-        if area > maxArea:
-            maxArea=area
-            IdMaxArea=c
-    posx,posy=find_center(png_image,IdMaxArea)
-    #cv2.circle(png_image,(int(posx),int(posy)),10,(255,255,255),2)
-	
+    print (len(contours))
+    if not contours:
+        posx,posy=64,64
+    else:
+        for c in contours:
+            area = cv2.contourArea(c)
+            if area > maxArea:
+                maxArea=area
+                IdMaxArea=c
+        posx,posy=find_center(png_image,IdMaxArea)
 	
     return (posx,posy)
 
 def get_image(self):
-	responses = self.client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.Scene, False,False)])
-	response = responses[0]
-	img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-	img_rgba = img1d.reshape(response.height, response.width, 3)
-	img_rgba = cv2.resize(img_rgba, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
-	return img_rgba
+    responses = self.client.simGetImages([airsim.ImageRequest("1", 4 ,pixels_as_float = True)]) 
+    response=responses[0]
+    img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
+    img=img*255
+
+    return img

@@ -24,7 +24,7 @@ def update_line(hl, new_data):
 	hl.set_3d_properties(list(np.append(zdata, new_data[2])))
 	plt.draw()
 
-# Make the drone fly in a circle.
+
 class FollowTrajectory:
     def __init__(self, altitude = -25, speed = 6, snapshots = None):
  
@@ -38,12 +38,10 @@ class FollowTrajectory:
 
 
     def start(self,trajectory,ax):
-        net=IA.IA_setup()
+
         print("arming the drone...")
         self.client.armDisarm(True)
-        
-        # AirSim uses NED coordinates so negative axis is up.
-        start = self.client.getMultirotorState().kinematics_estimated.position
+
         landed = self.client.getMultirotorState().landed_state
         if not self.takeoff and landed == airsim.LandedState.Landed: 
             self.takeoff = True
@@ -52,25 +50,21 @@ class FollowTrajectory:
 
         else:
             print("already flying")
-        n=0
         if plot:
             droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
         
         for point in trajectory:
+            
             a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
             data=self.client.getMultirotorState()
             collision=self.client.simGetCollisionInfo()
-   
-            while not(a._set_flag): # and not(collision.has_collided)
+
+            while not(a._set_flag) and not(collision.has_collided):         #loop while moveToPosition finishes and has not collided
 
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
-                img=proc.get_image(self)
-                out_img=IA.IA_process(net,img,n)
-                cv2.imshow('img',np.uint8(out_img))
-                cv2.waitKey(2)
-                x,y=proc.Drone_Vision(np.float32(out_img))
-                n=n+1
+                reward=RL.Compute_reward(collision,data.kinematics_estimated.position,self,point)
+                                                                            #The network should yield another point
                 if plot:
                     position = data.kinematics_estimated.position
                     update_line(droneline,[position.x_val ,position.y_val,-position.z_val])

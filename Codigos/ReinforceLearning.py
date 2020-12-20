@@ -1,7 +1,4 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
+
 import numpy as np
 import math
 import ImgProc as proc
@@ -9,7 +6,7 @@ import airsim
 
 
 
-def Compute_reward(collision_info,position,self,waypoint):
+def Compute_reward(collision_info,position,self,waypoint):      #The position should be the output of the neural network
     Theshold_dist=10
     if collision_info.has_collided:
         reward=-100
