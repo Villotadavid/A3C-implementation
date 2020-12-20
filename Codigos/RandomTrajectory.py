@@ -10,18 +10,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 import math
-'''
-parser = argparse.ArgumentParser()
-parser.add_argument("--Length",help="Side of the square delimiting the area of the trajectory",default=100)
-parser.add_argument("--Waypoints",help="Number of waypoints",default=10)
-parser.add_argument("--distance",help="Distance between waypoints",default=20)
-parser.add_argument("--Z",help="Maximum height value",default=25)
-args=parser.parse_args()
 
-nwp=args.Waypoints+2
-D=args.distance
-Z=args.Z
-'''
 def Trajectory_Generation(Waypoints,D,Z):
     nwp=Waypoints+2
     Waypoints=np.empty([nwp,3],dtype=np.float32)

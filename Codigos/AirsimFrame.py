@@ -6,11 +6,12 @@ import math
 import time
 import argparse
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import numpy as np
-from RandomTrajectory import Trajectory_Generation
 from mpl_toolkits.mplot3d import Axes3D
 
+from RandomTrajectory import Trajectory_Generation
+import ImgProc as proc
+import ReinforceLearning as RL
 
 plt.style.use('ggplot')
 
@@ -57,20 +58,23 @@ class FollowTrajectory:
         position = self.client.getMultirotorState().kinematics_estimated.position
         print (position)
         n=0
-        droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
+        if plot:
+            droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
         
         for point in trajectory:
-            print (point)
             a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
             data=self.client.getMultirotorState()
             collision=self.client.simGetCollisionInfo()
-            print (a._set_flag)
-            while not(a._set_flag) and not(collision.has_collided):
+            timer=0    
+            while not(a._set_flag): # and not(collision.has_collided)
+
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
-                position = data.kinematics_estimated.position
-                update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
-                plt.pause(0.25)
+                RL.Compute_reward(collision,data.kinematics_estimated.position,self,point)
+                if plot:
+                    position = data.kinematics_estimated.position
+                    update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
+                    plt.pause(0.25)
            
 
         print("landing...")
@@ -84,18 +88,32 @@ class FollowTrajectory:
 
 
 if __name__ == "__main__":  
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--Plot",help="Get a plot of the trajectories",default=False)
+    parser.add_argument("--Waypoints",help="Number of waypoints",default=6)
+
+    args=parser.parse_args()
+
+    nwp=args.Waypoints
+    plot=args.Plot
+
+
     nav = FollowTrajectory()
-    nwp=6
     trajectory=Trajectory_Generation(nwp,20,-30)
 
-    map = plt.figure()
-    ax = Axes3D(map)
-    ax.autoscale(enable=True, axis='both', tight=True)
-    ax.scatter(trajectory[:,0], trajectory[:,1], -trajectory[:,2], cmap='Greens');
-    ax.plot(trajectory[:,0], trajectory[:,1], -trajectory[:,2]);
-    s=0
-    for n in trajectory:
-        ax.text(n[0], n[1], -n[2],s)
-        s+=1
-
+    
+    if plot:
+        map = plt.figure()
+        ax = Axes3D(map)
+        ax.autoscale(enable=True, axis='both', tight=True)
+        ax.scatter(trajectory[:,0], trajectory[:,1], -trajectory[:,2], cmap='Greens');
+        ax.plot(trajectory[:,0], trajectory[:,1], -trajectory[:,2]);
+        s=0
+        for n in trajectory:
+            ax.text(n[0], n[1], -n[2],s)    #Negative due to the SR system
+            s+=1
+    else:
+        ax=0
+        
     nav.start(trajectory,ax)
