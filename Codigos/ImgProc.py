@@ -9,6 +9,12 @@ import cv2
 import airsim
 import time
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import torchvision.transforms as T
+
 def find_center(stereo,contour):
 	(xmax,ymax)=stereo.shape
 	count=0
@@ -57,5 +63,6 @@ def get_image(self):
     response=responses[0]
     img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
     img=img*255
-
-    return img
+    img = torch.from_numpy(img)
+    
+    return self.resize(img).unsqueeze(0).to(self.device)

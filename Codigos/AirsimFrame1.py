@@ -15,6 +15,13 @@ import ImgProc as proc
 import ReinforceLearning as RL
 import IA_setup as IA
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import torchvision.transforms as T
+from PIL import Image
+
 plt.style.use('ggplot')
 
 def update_line(hl, new_data):
@@ -28,13 +35,14 @@ def update_line(hl, new_data):
 class FollowTrajectory:
     def __init__(self, altitude = -25, speed = 6, snapshots = None):
  
-        self.takeoff = False
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
         self.client.enableApiControl(True)
-
-        self.home = self.client.getMultirotorState().kinematics_estimated.position
-        print (self.home)
+        self.resize = T.Compose([T.ToPILImage(),
+                    T.Resize(40, interpolation=Image.CUBIC),
+                    T.ToTensor()])
+        use_cuda = torch.cuda.is_available()
+        self.device = torch.device("cuda:0" if use_cuda else "cpu")
 
 
     def start(self,trajectory,ax):
@@ -43,13 +51,9 @@ class FollowTrajectory:
         self.client.armDisarm(True)
 
         landed = self.client.getMultirotorState().landed_state
-        if not self.takeoff and landed == airsim.LandedState.Landed: 
-            self.takeoff = True
-            self.client.takeoffAsync().join()
-            start = self.client.getMultirotorState().kinematics_estimated.position
-
-        else:
-            print("already flying")
+        if landed == airsim.LandedState.Landed: 
+            self.client.takeoffAsync().join()            
+            
         if plot:
             droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
         
@@ -58,12 +62,13 @@ class FollowTrajectory:
             a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
             data=self.client.getMultirotorState()
             collision=self.client.simGetCollisionInfo()
-
-            while not(a._set_flag) and not(collision.has_collided):         #loop while moveToPosition finishes and has not collided
+            RL_control=False
+            while not(a._set_flag) and not(collision.has_collided) and not(RL_control):         #loop while moveToPosition finishes and has not collided
 
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
-                reward=RL.Compute_reward(collision,data.kinematics_estimated.position,self,point)
+                img=proc.get_image(self)
+                #reward=RL.Compute_reward(collision,data.kinematics_estimated.position,self,point)
                                                                             #The network should yield another point
                 if plot:
                     position = data.kinematics_estimated.position
