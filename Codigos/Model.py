@@ -43,4 +43,4 @@ class DQN(nn.Module):
         x=self.ReLu(x)
         x=self.Fully2(x)
         x=self.dropout(x)
-        return (x)
+        return (x[0])
