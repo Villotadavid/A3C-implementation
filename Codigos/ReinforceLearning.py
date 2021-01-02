@@ -87,7 +87,7 @@ def optimize_model(self):
     transitions=memory.sample(BATCH_SIZE)
     batch=Transition(*zip(*transitions))
     non_final_mask=torch.tensor(tuple(map(lambda s: s is not None,batch.next_state)),device=device, dtype=torch.bool)
-    non_final_next_states=torch.cat([s for s in batch.next_state if s is not None])
+    non_final_next_states=torch.cat([s for s in batch.next_state if s is not None]) 
     
     state_batch=torch.cat(batch.state)
     action_batch=torch.cat(batch.action)
@@ -145,7 +145,7 @@ class DQN_:
                 #Observe new state
                 last_state=state
                 img,next_state=proc.get_image(self,process,device)
-                memory.push(last_state,action,next_state,reward)
+                memory.push(last_state,action,next_state,torch.tensor([reward]))
                 optimize_model(self)
                 done=isDone(reward)
                 if done:
@@ -154,7 +154,7 @@ class DQN_:
                 
             if i_episode % TARGET_UPDATE ==0:
                 target_net.load_state_dict(policy_net.state_dict())
-            client.reset()
+            self.client.reset()
  
 BATCH_SIZE = 128
 GAMMA = 0.999
@@ -166,7 +166,7 @@ TARGET_UPDATE = 10
 steps_done=0
 num_episodes=5 
 
-memory= ReplayMemory(10000)
+
    
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -175,15 +175,18 @@ policy_net = Model.DQN().to(device)
 target_net = Model.DQN().to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
+
+optimizer=optim.RMSprop(policy_net.parameters())
+memory= ReplayMemory(10000)
+
 process = T.Compose([T.ToPILImage(),
                     T.Resize((128,128), interpolation=Image.CUBIC),
                     T.ToTensor()])
+episode_durations = []
 
 def main():           
 
-        
-    optimizer=optim.RMSprop(policy_net.parameters())
-
+    
     Framework=DQN_()      
     Framework.train(num_episodes)
 
