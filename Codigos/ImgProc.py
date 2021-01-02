@@ -37,15 +37,13 @@ def find_center(stereo,contour):
 
 	return (x,y)
 
-def Drone_Vision(self):
-    png_image=np.float32(get_image(self))
+def Drone_Vision(png_image):
+    
     t, png_image = cv2.threshold(png_image, 15, 255, cv2.THRESH_BINARY)
     png_image = cv2.GaussianBlur(png_image, (3, 3), 3)
     t, png_image = cv2.threshold(png_image, 0, 255, cv2.THRESH_BINARY)
     contours, _  = cv2.findContours(np.uint8(png_image), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
     maxArea=0
-    print (len(contours))
     if not contours:
         posx,posy=64,64
     else:
@@ -58,11 +56,8 @@ def Drone_Vision(self):
 	
     return (posx,posy)
 
-def get_image(self):
-    responses = self.client.simGetImages([airsim.ImageRequest("1", 4 ,pixels_as_float = True)]) 
+def get_image(self,process,device):
+    responses = self.client.simGetImages([airsim.ImageRequest("1", 3 ,pixels_as_float = True)]) 
     response=responses[0]
     img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
-    img=img*255
-    img = torch.from_numpy(img)
-    
-    return self.resize(img).unsqueeze(0).to(self.device)
+    return img, process(img).unsqueeze(0).to(device)

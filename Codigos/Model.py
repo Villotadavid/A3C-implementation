@@ -33,21 +33,14 @@ class DQN(nn.Module):
         
         
     def forward(self,x):
-        print ('hola')
+        #print (x.size())
         x=self.Conv1(x)
-        print('1',x.size())
         x=self.ReLu(x)
-        print('2',x.size())
         x=self.Conv2(x)
-        print('3',x.size())
         x = x.view(-1, 124 * 124 * 32)
         x=self.ReLu(x)
-        print('4',x.size())
         x=self.Fully1(x)
-        print('5',x.size())
         x=self.ReLu(x)
-        print('6',x.size())
         x=self.Fully2(x)
-        print('7',x.size())
         x=self.dropout(x)
         return (x)

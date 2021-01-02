@@ -29,9 +29,6 @@ class History(object):
         self._buffer.fill(0)
         
         
-def img_transform (img):
-    transform=transforms.Compose([transforms.ToTensor()])
-    return transform(img)
         
 class DQN_RL_airsim(object):
     def __init__(self,input_shape, nb_actions,
