@@ -11,9 +11,7 @@ import keyboard
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  #Sirve para silenciarlo warnings de TensorFlow
 
-ORIENTATION = airsim.Quaternionr(0.012, -0.156, 0.076, 0.985)
 
-POSITIONS = [(15, 18, -40),  (55, 18, -40), (55, -20, -40), (15, -20, -40), (15, 18, -40)]
 
 client = airsim.MultirotorClient()
 client.confirmConnection()
@@ -21,12 +19,17 @@ client.enableApiControl(True)
 client.armDisarm(True)
 
 try:
-    if client.getMultirotorState().landed_state == airsim.LandedState.Landed:
-        client.takeoffAsync(timeout_sec=5).join()
-    client.hoverAsync().join()   
-    client.moveToPositionAsync(5,10,40,4)
-    time.sleep(100)
+    responses = client.simGetImages([airsim.ImageRequest("1", 4 ,pixels_as_float = True)]) 
+    response=responses[0]
+    
+    img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
+    img=img*255
+    
+    t, img = cv2.threshold(img, 10, 255, cv2.THRESH_BINARY)
+    img = cv2.GaussianBlur(img, (7, 7), 3)
+    t, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
+    cv2.imshow('img',img*255)
+    cv2.waitKey()
 
-    client.landAsync().join()
 except KeyboardInterrupt:
     client.reset()

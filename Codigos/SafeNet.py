@@ -67,8 +67,11 @@ class Resnet(nn.Module):
         
     def forward(self, x):
         out=self.conv5(x)
+        print(out.size())
         out = self.maxpool(out)
+        print(out.size())
         out = self.resblocks1(out)
+        print(out.size())
         out = self.resblocks2(out)
         out = self.resblocks3(out)
         out = out.view(-1, 128 * 13 * 13)
@@ -77,7 +80,11 @@ class Resnet(nn.Module):
         out = self.fc2(out)
         return out
 
-
+model=Resnet() 
+if torch.cuda.is_available():   #Check if GPU is available 
+    model.cuda()                #Sends the model to GPU (This avoids variable type errors)
+    
+summary(model,(1,400,400)) 
 #general='C:/Users/usuario/Desktop/Doctorado/Codigos/imagenes'
 #frames=sorted(glob.glob(general+'/*'))
 #ground_truth = np.loadtxt('C:/Users/usuario/Desktop/Doctorado/Codigos/LabelsX.txt', usecols=0, skiprows=1)

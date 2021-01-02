@@ -1,63 +1,57 @@
-import torch
-from Dataset import Dataset,Data_gen
-import SafeNet
-from torchvision import transforms
-from torchsummary import summary
+# -*- coding: utf-8 -*-
 import numpy as np
+import math
+import ImgProc as proc
+import airsim
+import math
+import random
+
+import matplotlib
+import matplotlib.pyplot as plt
+from collections import namedtuple
+from itertools import count
+from PIL import Image
+
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn.functional as F
+import torchvision.transforms as T
+
+################### COMPUTE REWARD ##################################
+
+def Compute_reward(collision_info,position,self,waypoint):      #The position should be the output of the neural network
+    Theshold_dist=10
+    if collision_info.has_collided:
+        reward=-100
+    else:
+        x,y=proc.Drone_Vision(self)
+        dist=math.sqrt(abs(x-position.x_val)**2+abs(x-position.y_val)**2)
+        if dist>Theshold_dist:
+            reward=-dist/2
+        else:
+            reward=20
+    return (reward)
 
 
+################### REPLAY MEMORY ##################################
+Transition=namedtuple('Transition',('state','action','next_state','reward'))
 
-
-# CUDA for PyTorch
-use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
-torch.backends.cudnn.benchmark = True
-
-# Parameters
-params = {'batch_size': 5,
-          'shuffle': True,
-          'num_workers': 0}
-
-''' DATA GENERATION '''
-# Datasets
-#partition,labels =Data_gen('C:/Users/usuario/Desktop/Doctorado/Dataset/Exp51',0.7)
-Data=Dataset('C:/Users/usuario/Desktop/Doctorado/Dataset/Exp51')
-
-
-# Generators
-
-training_generator = torch.utils.data.DataLoader(Data, **params)
-
-
-validation_generator = torch.utils.data.DataLoader(Data, **params)
-
-''' MODEL GENERATION '''
-
-model=SafeNet.Resnet()                  #CPU Model definition
-
-if torch.cuda.is_available():   #Check if GPU is available 
-    model.cuda()                #Sends the model to GPU (This avoids variable type errors)
+class ReplayMemory(object):
     
-summary(model,(1,400, 400))
-
-n_epochs=100
-learning_rate = 1e-2
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-criterion = nn.CrossEntropyLoss()
-sad=[]
-
-
-
-for epoch in range(n_epochs):
-    for batch, labels in training_generator:
-        local_batch, labels = batch.to(device), labels.to(device=device)
-        outputs = model(local_batch)
-
-        loss = criterion(outputs, torch.max(labels, 1)[1])
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    print("Epoch: %d, Loss: %f" % (epoch, float(loss)))
+    def __init__(self,capacity):
+        self.capacity=capacity
+        self.memory=[]
+        self.position=0
+        
+    def push(self,*args):
+        if len(self.memory)<self.capacity:
+            self.memory.append(None)
+        self.memory[self.position]=Transition(*args)
+        self.position=(self.position+1)%self.capacity
+        
+    def sample(self,batch_size):
+        return random.sample(self.memory, batch_sizes)
+    
+    def __len__(self):
+        return len(self.memory)

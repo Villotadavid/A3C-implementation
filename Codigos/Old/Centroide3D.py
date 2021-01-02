@@ -22,7 +22,7 @@ def pixeles(img,centro,radio=20):
 
 	return(indices,n)
 
-def find_center(stereo,contour,img):
+def find_center(stereo,contour):
 	(xmax,ymax)=stereo.shape
 	count=0
 	posx=0
@@ -32,19 +32,12 @@ def find_center(stereo,contour,img):
 	col_y=[]
 	for x in range (0,xmax):
 	   for y in range (0,ymax):
-		if stereo[x,y]==255:                    
-			img[x,y,2]=255
-		else:	
-			
-			if cv2.pointPolygonTest(contour,(y,x), True)>0:		
-				points.append((x,y))		#Guarda solo los puntos negros	
-				posx=posx+x
-				posy=posy+y
-				count+=1
-			else:
-				img[x,y,2]=255
-				
-
+		if stereo[x,y]!=255 and cv2.pointPolygonTest(contour,(y,x), True)>0:                    		
+			points.append((x,y))
+			posx=posx+x
+			posy=posy+y
+			count+=1
+            
 	points=np.array(points)				#Transforma lista en array
 
 	if count==0:					#En caso de que no haya pixels de colision evita un div por cero
@@ -52,7 +45,7 @@ def find_center(stereo,contour,img):
 	y=posx/count				#Calculo de coordenadas del centroide
 	x=posy/count
 
-	return (x,y,points,img)
+	return (x,y,points)
 
 
 
