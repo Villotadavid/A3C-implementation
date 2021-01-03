@@ -60,4 +60,7 @@ def get_image(self,process,device):
     responses = self.client.simGetImages([airsim.ImageRequest("1", 3 ,pixels_as_float = True)]) 
     response=responses[0]
     img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
-    return img, process(img).unsqueeze(0).to(device)
+    #print(np.max(img/255),np.max(img))
+    img=np.float64(img)
+    img=cv2.resize(img,(128,128))
+    return img, process(img/np.max(img)).unsqueeze(0).to(device) #np.array could be dispensable

@@ -75,9 +75,9 @@ def select_action(self,state):
     steps_done+=1
     if sample > eps_threshold:
         with torch.no_grad():
-            return policy_net(state) #.max(1)[1].view(1,1)
+            return  policy_net(state).type(torch.long)#.max(1)[1].view(1,1)
     else:
-        return torch.tensor([random.randrange(128),random.randrange(128)],device=device,dtype=torch.long)
+        return torch.tensor([[random.randrange(128),random.randrange(128)]],device=device,dtype=torch.long)
         
 ################### OPTIMIZE MODEL ##################################
         
@@ -85,18 +85,22 @@ def optimize_model(self):
     if len(memory) < BATCH_SIZE:
         return
     transitions=memory.sample(BATCH_SIZE)
+
     batch=Transition(*zip(*transitions))
+    print(np.size(batch.state),np.size(batch.action),np.size(batch.reward))
     non_final_mask=torch.tensor(tuple(map(lambda s: s is not None,batch.next_state)),device=device, dtype=torch.bool)
     non_final_next_states=torch.cat([s for s in batch.next_state if s is not None]) 
-    
+
     state_batch=torch.cat(batch.state)
     action_batch=torch.cat(batch.action)
     reward_batch=torch.cat(batch.reward)
-    
+
     state_action_values=policy_net(state_batch).gather(1,action_batch)
     
-    next_state_values=torch.zero(BATCH_SIZE,device=device)
-    next_state_values[non_final_mask]=target_net(non_final_next_state).max(1)[0].detach()
+    
+    next_state_values=torch.zeros(BATCH_SIZE,device=device)
+    print(non_final_next_states.size())
+    next_state_values[non_final_mask]=target_net(non_final_next_states) #.max(1)[0].detach()
     
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -133,7 +137,6 @@ class DQN_:
         for i_episode in range(num_episodes):
             # Initialize the environment and state
             img,state=proc.get_image(self,process,device)
-            
 
             for t in count():
                 # Select and perform an action
@@ -156,7 +159,7 @@ class DQN_:
                 target_net.load_state_dict(policy_net.state_dict())
             self.client.reset()
  
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
@@ -179,8 +182,8 @@ target_net.eval()
 optimizer=optim.RMSprop(policy_net.parameters())
 memory= ReplayMemory(10000)
 
-process = T.Compose([T.ToPILImage(),
-                    T.Resize((128,128), interpolation=Image.CUBIC),
+process = T.Compose([#T.ToPILImage(),
+                    #T.Resize((128,128), interpolation=Image.CUBIC),
                     T.ToTensor()])
 episode_durations = []
 

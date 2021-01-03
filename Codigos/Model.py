@@ -33,7 +33,7 @@ class DQN(nn.Module):
         
         
     def forward(self,x):
-        #print (x.size())
+        x=x.float()
         x=self.Conv1(x)
         x=self.ReLu(x)
         x=self.Conv2(x)
@@ -43,4 +43,4 @@ class DQN(nn.Module):
         x=self.ReLu(x)
         x=self.Fully2(x)
         x=self.dropout(x)
-        return (x[0])
+        return (x)
