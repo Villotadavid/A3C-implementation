@@ -26,7 +26,7 @@ class DQN(nn.Module):
         self.Conv1=nn.Conv2d(1, 16, (3,3))
         self.Conv2=nn.Conv2d(16,32, (3,3))
         self.Fully1=nn.Linear(32*124*124,16)
-        self.Fully2=nn.Linear(16,2)
+        self.Fully2=nn.Linear(16,9)
         self.ReLu=nn.ReLU()
         self.dropout = nn.Dropout2d(p=0.5)
         
