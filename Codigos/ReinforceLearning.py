@@ -23,24 +23,43 @@ import Model
 import ImgProc as proc
 
 
+def interpret_action(action):
+    scaling_factor = 0.25
+    if action == 0:
+        quad_offset = (0, -scaling_factor, scaling_factor)
+    elif action == 1:
+        quad_offset = (0, 0, scaling_factor)
+    elif action == 2:
+        quad_offset = (0, scaling_factor, scaling_factor)
+    elif action == 3:
+        quad_offset = (0, -scaling_factor, 0)
+    elif action == 4:
+        quad_offset = (0, 0, 0)    
+    elif action == 5:
+        quad_offset = (0, scaling_factor, 0)
+    elif action == 6:
+        quad_offset = (0, -scaling_factor, -scaling_factor)
+    elif action == 7:
+        quad_offset = (0, 0, -scaling_factor)    
+    elif action == 8:
+        quad_offset = (0, scaling_factor, -scaling_factor)
 
+    
+    return quad_offset
 
 ################### COMPUTE REWARD ##################################
 
-def Compute_reward(self,collision_info,img,position):      #The position should be the output of the neural network
-    position=position*128
-    Theshold_dist=10
+def Compute_reward(self,collision_info,img,action):      #The position should be the output of the neural network
+
     if collision_info.has_collided:
         reward=-100
     else:
-        x,y=proc.Drone_Vision(img)
-        dist=10
-        #dist=math.sqrt(abs(x-position[0].item())**2+abs(x-position[1].item())**2)
-        reward=20
-        if dist>Theshold_dist:
-            reward=-dist/2
+        Correct_action=proc.Drone_Vision(img)
+        if Correct_action!= action:
+            reward=-20
         else:
             reward=20
+
     return (reward)
 
 
@@ -124,7 +143,7 @@ def optimize_model(self):
     
 def isDone(reward):
     done = 0
-    if  reward <= -10:
+    if  reward <= -60:
         done = 1
     return done
 ################### PARAMETERS & TRAINING ##################################
@@ -149,6 +168,7 @@ class DQN_:
             for t in count():
                 # Select and perform an action
                 action = select_action(self,state)
+                self.client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 5).join()
                 collision_info=self.client.simGetCollisionInfo()
 
                 reward=Compute_reward(self,collision_info,img,action)
