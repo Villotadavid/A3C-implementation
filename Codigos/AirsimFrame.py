@@ -8,10 +8,19 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+import cv2
 
 from RandomTrajectory import Trajectory_Generation
 import ImgProc as proc
 import ReinforceLearning as RL
+import IA_setup as IA
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import torchvision.transforms as T
+from PIL import Image
 
 plt.style.use('ggplot')
 
@@ -22,55 +31,44 @@ def update_line(hl, new_data):
 	hl.set_3d_properties(list(np.append(zdata, new_data[2])))
 	plt.draw()
 
-# Make the drone fly in a circle.
+
 class FollowTrajectory:
     def __init__(self, altitude = -25, speed = 6, snapshots = None):
  
-        self.takeoff = False
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
         self.client.enableApiControl(True)
-
-        self.home = self.client.getMultirotorState().kinematics_estimated.position
-        print (self.home)
+        self.resize = T.Compose([T.ToPILImage(),
+                    T.Resize(40, interpolation=Image.CUBIC),
+                    T.ToTensor()])
+        use_cuda = torch.cuda.is_available()
+        self.device = torch.device("cuda:0" if use_cuda else "cpu")
 
 
     def start(self,trajectory,ax):
+
         print("arming the drone...")
         self.client.armDisarm(True)
-        
-        # AirSim uses NED coordinates so negative axis is up.
-        start = self.client.getMultirotorState().kinematics_estimated.position
+
         landed = self.client.getMultirotorState().landed_state
-        if not self.takeoff and landed == airsim.LandedState.Landed: 
-            self.takeoff = True
-            self.client.takeoffAsync().join()
-            start = self.client.getMultirotorState().kinematics_estimated.position
-
-        else:
-            print("already flying")
-
-        start = self.client.getMultirotorState()
-        print (start)
-        
-        #self.client.moveToPositionAsync(0, 0, -5, 2).join()
-        print ('Drone en posición de inicio')
-        position = self.client.getMultirotorState().kinematics_estimated.position
-        print (position)
-        n=0
+        if landed == airsim.LandedState.Landed: 
+            self.client.takeoffAsync().join()            
+            
         if plot:
             droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
         
         for point in trajectory:
+            
             a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
             data=self.client.getMultirotorState()
             collision=self.client.simGetCollisionInfo()
-            timer=0    
-            while not(a._set_flag): # and not(collision.has_collided)
+            RL_control=False
+            while not(a._set_flag) and not(collision.has_collided) and not(RL_control):         #loop while moveToPosition finishes and has not collided
 
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
-                RL.Compute_reward(collision,data.kinematics_estimated.position,self,point)
+                img=proc.get_image(self,)
+                                                           
                 if plot:
                     position = data.kinematics_estimated.position
                     update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
@@ -115,5 +113,7 @@ if __name__ == "__main__":
             s+=1
     else:
         ax=0
-        
+
+    
+
     nav.start(trajectory,ax)
