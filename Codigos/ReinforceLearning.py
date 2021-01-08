@@ -141,9 +141,9 @@ def optimize_model(self):
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
     
-def isDone(reward):
+def isDone(reward,collision):
     done = 0
-    if  reward <= -60:
+    if  reward <= -60 or collision.has_collided==True:
         done = 1
     return done
 ################### PARAMETERS & TRAINING ##################################
@@ -163,12 +163,16 @@ class DQN_:
 
         for i_episode in range(num_episodes):
             # Initialize the environment and state
+            print('Episode number'+ str(i_episode))
             img,state=proc.get_image(self,process,device)
 
             for t in count():
                 # Select and perform an action
                 action = select_action(self,state)
-                self.client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 5).join()
+                print (action)
+                quad_offset=interpret_action(action)
+                quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
+                self.client.moveByVelocityAsync(2, quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 2).join()
                 collision_info=self.client.simGetCollisionInfo()
 
                 reward=Compute_reward(self,collision_info,img,action)
@@ -178,7 +182,7 @@ class DQN_:
                 img,next_state=proc.get_image(self,process,device)
                 memory.push(last_state,action,next_state,torch.tensor([reward]))
                 optimize_model(self)
-                done=isDone(reward)
+                done=isDone(reward,collision_info)
                 if done:
                     episode_durations.append(t+1)
                     break
@@ -218,7 +222,8 @@ episode_durations = []
 def main():           
 
     
-    Framework=DQN_()      
+    Framework=DQN_()    
+    print ('Todo OK')
     Framework.train(num_episodes)
 
 if __name__=="__main__":
