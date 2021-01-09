@@ -93,8 +93,11 @@ def select_action(self,state):
     eps_threshold=EPS_END+(EPS_START-EPS_END)*math.exp(-1.0*steps_done/EPS_DECAY)
     steps_done+=1
     if sample > eps_threshold:
-        with torch.no_grad():
-            
+        with torch.no_grad(): #no_grad()-> Disable gradient calculation. Useful for interference,when Tensor.bakward() cannot be called
+                              #It reduces memory consumtion for computations
+            # t.max(1) will return largest column value of each row.
+            # second column on max result is index of where max element was
+            # found, so we pick action with the larger expected reward.
             return  policy_net(state).type(torch.long).max(1)[1].view(1,1)
     else:
         
@@ -133,7 +136,7 @@ def optimize_model(self):
     ########## Compute Huber loss #######################
     
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
-
+    print (loss)
     # Optimize the model
     optimizer.zero_grad()
     loss.backward()
@@ -169,7 +172,6 @@ class DQN_:
             for t in count():
                 # Select and perform an action
                 action = select_action(self,state)
-                print (action)
                 quad_offset=interpret_action(action)
                 quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
                 self.client.moveByVelocityAsync(2, quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 2).join()

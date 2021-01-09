@@ -13,7 +13,7 @@ import cv2
 from RandomTrajectory import Trajectory_Generation
 import ImgProc as proc
 import ReinforceLearning as RL
-import IA_setup as IA
+
 
 import torch
 import torch.nn as nn
@@ -67,8 +67,9 @@ class FollowTrajectory:
 
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
-                img=proc.get_image(self,)
-                                                           
+                #img=proc.get_image(self,)
+                #self.client.moveByVelocityAsync(0, 0, -5, 2 ).join()
+                print('HOla')                                          
                 if plot:
                     position = data.kinematics_estimated.position
                     update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
