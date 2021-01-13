@@ -25,31 +25,25 @@ Basic_contours = [np.array([[[0,0]],[[0,42]],[[42,42]],[[42,0]]]),
                   np.array([[[42,86]],[[86,86]],[[86,128]],[[42,128]]]),
                   np.array([[[86,86]],[[128,86]],[[128,128]],[[86,128]]])]
     
+def data_image(action=7,correct_point=6,img=np.zeros([128,128],dtype=np.int8)):
 
-def find_center(stereo, contour):
-    (xmax, ymax) = stereo.shape
+    cv2.drawContours(img,Basic_contours,-1,(255), 1, cv2.LINE_AA)
+    cv2.drawContours(img,Basic_contours,action,(255), 4, cv2.LINE_AA)
+    cv2.drawContours(img,Basic_contours,action,(112), 4, cv2.LINE_AA)
+    
+    cv2.imshow('Current Frame',img)
+    cv2.waitKey(5)
+    return 0
+
+def find_center(img, contour):
+    (xmax, ymax) = img.shape
     count = 0
-    posx = 0
-    posy = 0
-    points = []
 
     for x in range(0, xmax):
         for y in range(0, ymax):
-            if (stereo[x, y] != 255 and cv2.pointPolygonTest(contour, (y, x), True) >= 0):
-                posx = posx+x
-                posy = posy+y
+            if (img[x, y] != 255 and cv2.pointPolygonTest(contour, (y, x), True) >= 0):
                 count += 1
-
-        if count == 0:  # En caso de que no haya pixels de colision evita un div por cero
-            count = 1
-        y = posx/count  # Calculo de coordenadas del centroide
-        x = posy/count
-        i=0
-        for Bcontour in Basic_contours:
-            if cv2.pointPolygonTest(Bcontour, (x,y), True):
-                action=[i]
-                i+=1
-        return (action)
+        return count
 
 
 def Drone_Vision(png_image):
@@ -61,16 +55,16 @@ def Drone_Vision(png_image):
         np.uint8(png_image), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     maxArea = 0
     if not contours:
-        posx, posy = 64, 64
+        count=0
     else:
         for c in contours:
             area = cv2.contourArea(c)
             if area > maxArea:
                 maxArea = area
                 IdMaxArea = c
-        action = find_center(png_image, IdMaxArea)
+        count = find_center(png_image, IdMaxArea)
 
-    return (action)
+    return count
 
 
 def get_image(self, process, device):
@@ -84,3 +78,6 @@ def get_image(self, process, device):
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
     return img, process(img/np.max(img)).unsqueeze(0).to(device)
+
+'''if __name__=='__main__':
+    data_image()'''

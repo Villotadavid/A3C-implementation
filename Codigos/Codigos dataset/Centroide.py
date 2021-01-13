@@ -108,7 +108,7 @@ def main():
 				      
 
 				posx,posy,regression_points,img=find_center(stereo,IdMaxArea,img)
-       				cv2.drawContours(img, [IdMaxArea], 0, (0, 255, 0), 2, cv2.LINE_AA)   
+       			cv2.drawContours(img, [IdMaxArea], 0, (0, 255, 0), 2, cv2.LINE_AA)   
 				p_obj=[posx,posy]
 				n=n+1
 				p,num=pixeles(stereo,p_obj,r)

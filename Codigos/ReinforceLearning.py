@@ -49,18 +49,20 @@ def interpret_action(action):
 
 ################### COMPUTE REWARD ##################################
 
-def Compute_reward(self,collision_info,img,action):      #The position should be the output of the neural network
+def Compute_reward(self,img ,collision_info ,col_prob ,wp2 ,position ):      #The position should be the output of the neural network
 
     if collision_info.has_collided:
-        reward=-100
+        R=-100
     else:
-        Correct_action=proc.Drone_Vision(img)
-        if Correct_action!= action:
-            reward=-20
-        else:
-            reward=20
-
-    return (reward)
+        A_l=proc.Drone_Vision(img)                           #A_l Área Libre
+        #proc.data_image(action,Correct_action,img)          #Displays objective area
+        
+        L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
+        R_l=1/(L+0.5)
+        R_cp=-100*A_l/(128*128)
+        R=R_l+R_cp
+        
+    return (R)
 
 
 ################### REPLAY MEMORY ##################################
@@ -134,7 +136,6 @@ def optimize_model(self):
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
     ########## Compute Huber loss #######################
-    
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
     print (loss)
     # Optimize the model
