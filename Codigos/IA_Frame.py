@@ -67,20 +67,20 @@ class FollowTrajectory:
             position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,-data.kinematics_estimated.position.z_val]
             for t in count():         #loop while moveToPosition finishes and has not collided
                 
-                action = RL.select_action(self,state)
+                action = RL.select_action(self,state,torch.tensor([point]))
                 quad_offset=RL.interpret_action(action)
                 quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
                 self.client.moveByVelocityAsync(2, quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 2).join()
                 collision_info=self.client.simGetCollisionInfo()
                 col_prob=proc.Drone_Vision(img)
                 reward=RL.Compute_reward(self,img,collision_info,col_prob,trajectory[pt+1],position)
-                
+                #print (reward)
                 #Observe new state
                 last_state=state
                 img,next_state=proc.get_image(self,process,device)
                 data=self.client.getMultirotorState()
                 position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,-data.kinematics_estimated.position.z_val]
-                memory.push(last_state,action,next_state,torch.tensor([reward]))
+                memory.push(last_state,action,next_state,torch.tensor([reward]),torch.tensor([point]))
                 RL.optimize_model(self)
                 done=RL.isDone(reward,collision_info)  
                 
@@ -142,12 +142,12 @@ num_episodes=5
 use_cuda = torch.cuda.is_available()
 device = torch.device("cpu")   #"cuda:0" if use_cuda else "cpu")
  
-policy_net = Model.DQN().to(device)
+'''policy_net = Model.DQN().to(device)
 target_net = Model.DQN().to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-optimizer=optim.RMSprop(policy_net.parameters())
+optimizer=optim.RMSprop(policy_net.parameters())'''
 memory= RL.ReplayMemory(10000)
 
 process = T.Compose([T.ToTensor()])

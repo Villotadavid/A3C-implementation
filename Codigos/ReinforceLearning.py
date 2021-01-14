@@ -66,7 +66,7 @@ def Compute_reward(self,img ,collision_info ,col_prob ,wp2 ,position ):      #Th
 
 
 ################### REPLAY MEMORY ##################################
-Transition=namedtuple('Transition',('state','action','next_state','reward'))
+Transition=namedtuple('Transition',('state','action','next_state','reward','Waypoint'))
 
 class ReplayMemory(object):
     
@@ -89,7 +89,7 @@ class ReplayMemory(object):
     
 ##################### SELECT ACTION ##################################
         
-def select_action(self,state):
+def select_action(self,state,wp):
     global steps_done
     sample=random.random()
     eps_threshold=EPS_END+(EPS_START-EPS_END)*math.exp(-1.0*steps_done/EPS_DECAY)
@@ -100,7 +100,7 @@ def select_action(self,state):
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return  policy_net(state).type(torch.long).max(1)[1].view(1,1)
+            return  policy_net(state,wp).type(torch.long).max(1)[1].view(1,1)
     else:
         
         return torch.tensor([[random.randrange(9)]],device=device,dtype=torch.long)
@@ -116,20 +116,22 @@ def optimize_model(self):
 
     non_final_mask=torch.tensor(tuple(map(lambda s: s is not None,batch.next_state)),device=device, dtype=torch.bool)
     non_final_next_states=torch.cat([s for s in batch.next_state if s is not None]) 
-
+    non_final_next_Waypoint=torch.cat([s for s in batch.Waypoint if s is not None]) 
+    
     state_batch=torch.cat(batch.state)
     #print (batch.action.size())
     action_batch=torch.cat(batch.action)
+    waypoint_batch=torch.cat(batch.Waypoint)
     reward_batch=torch.cat(batch.reward)
     
     ######### Q(s_t) #####################
     
-    state_action_values=policy_net(state_batch).gather(0,action_batch)
+    state_action_values=policy_net(state_batch,waypoint_batch).gather(0,action_batch)
 
     ######### V(s_{t+1}) #####################
     
     next_state_values=torch.zeros(BATCH_SIZE,device=device)
-    next_state_values[non_final_mask]=target_net(non_final_next_states).max(1)[0].detach()
+    next_state_values[non_final_mask]=target_net(non_final_next_states,non_final_next_Waypoint).max(1)[0].detach()
     
     ######### Q-values (Belleman equation) #####################
     
@@ -137,7 +139,7 @@ def optimize_model(self):
 
     ########## Compute Huber loss #######################
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
-    print (loss)
+    #print (loss)
     # Optimize the model
     optimizer.zero_grad()
     loss.backward()
@@ -217,9 +219,7 @@ target_net.eval()
 optimizer=optim.RMSprop(policy_net.parameters())
 memory= ReplayMemory(10000)
 
-process = T.Compose([#T.ToPILImage(),
-                    #T.Resize((128,128), interpolation=Image.CUBIC),
-                    T.ToTensor()])
+process = T.Compose([T.ToTensor()])
 episode_durations = []
 
 def main():           

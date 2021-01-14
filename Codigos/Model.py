@@ -23,24 +23,45 @@ def conv_block(input_size, output_size):
 class DQN(nn.Module):
     def __init__(self):
         super().__init__()
+        
+        ############# image ##################
         self.Conv1=nn.Conv2d(1, 16, (3,3))
         self.Conv2=nn.Conv2d(16,32, (3,3))
         self.Fully1=nn.Linear(32*124*124,16)
-        self.Fully2=nn.Linear(16,9)
         self.ReLu=nn.ReLU()
         self.dropout = nn.Dropout2d(p=0.5)
         
+        ############# Waypoint ###############
+        self.Fully2=nn.Linear(3,9)
+        self.Fully3=nn.Linear(9,16)
         
+        ############# TOGETHER ###############
+        self.Fully4=nn.Linear(32,16)
+        self.Fully5=nn.Linear(16,9)
         
-    def forward(self,x):
-        x=x.float()
-        x=self.Conv1(x)
-        x=self.ReLu(x)
-        x=self.Conv2(x)
-        x = x.view(-1, 124 * 124 * 32)
-        x=self.ReLu(x)
-        x=self.Fully1(x)
-        x=self.ReLu(x)
-        x=self.Fully2(x)
-        x=self.dropout(x)
+    def forward(self,img,wp):
+        print (wp)
+        img=img.float()
+        img=self.Conv1(img)
+        img=self.ReLu(img)
+        img=self.Conv2(img)
+        img=img.view(-1, 124 * 124 * 32)
+
+        img=self.ReLu(img)
+        img=self.Fully1(img)
+        img=self.ReLu(img) 
+        
+        wp=self.Fully2(wp)
+        wp=self.ReLu(wp)
+        wp=self.Fully3(wp)
+        wp=self.ReLu(wp)
+        
+        x=torch.cat((img,wp),dim=1)
+        
+       
+        x=self.Fully4(x)
+        x=self.ReLu(x) 
+        x=self.Fully5(x)
+        x=self.ReLu(x) 
+        #x=self.dropout(x)
         return (x)
