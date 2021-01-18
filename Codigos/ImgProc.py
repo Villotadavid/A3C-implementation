@@ -67,7 +67,7 @@ def Drone_Vision(png_image):
     return count
 
 
-def get_image(self, process, device):
+def get_image(self):
     responses = self.client.simGetImages(
         [airsim.ImageRequest("1", 3, pixels_as_float=True)])
     response = responses[0]
@@ -77,7 +77,7 @@ def get_image(self, process, device):
     img = np.float64(img)
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
-    return img, process(img/np.max(img)).unsqueeze(0).to(device)
+    return img, self.process(img/np.max(img)).unsqueeze(0).to(self.device)
 
 '''if __name__=='__main__':
     data_image()'''

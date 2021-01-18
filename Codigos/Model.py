@@ -40,7 +40,6 @@ class DQN(nn.Module):
         self.Fully5=nn.Linear(16,9)
         
     def forward(self,img,wp):
-        print (wp)
         img=img.float()
         img=self.Conv1(img)
         img=self.ReLu(img)
@@ -63,5 +62,5 @@ class DQN(nn.Module):
         x=self.ReLu(x) 
         x=self.Fully5(x)
         x=self.ReLu(x) 
-        #x=self.dropout(x)
+        x=self.dropout(x)
         return (x)
