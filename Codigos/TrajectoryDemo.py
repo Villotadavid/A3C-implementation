@@ -68,8 +68,7 @@ class FollowTrajectory:
                 data=self.client.getMultirotorState()
                 collision=self.client.simGetCollisionInfo()
                 #img=proc.get_image(self,)
-                #self.client.moveByVelocityAsync(0, 0, -5, 2 ).join()
-                print('HOla')                                          
+                #self.client.moveByVelocityAsync(0, 0, -5, 2 ).join()                                         
                 if plot:
                     position = data.kinematics_estimated.position
                     update_line(droneline,[position.x_val ,position.y_val,-position.z_val])

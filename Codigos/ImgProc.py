@@ -74,7 +74,7 @@ def get_image(self):
     img = airsim.list_to_2d_float_array(
         response.image_data_float, response.width, response.height)
     # print(np.max(img/255),np.max(img))
-    img = np.float64(img)
+    img = np.ascontiguousarray(img, dtype=np.float64) / 255
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
     return img, self.process(img/np.max(img)).unsqueeze(0).to(self.device)

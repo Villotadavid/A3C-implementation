@@ -27,7 +27,7 @@ from PIL import Image
 
 import subprocess
 
-plt.style.use('ggplot')
+#plt.style.use('ggplot')
 
 def update_line(hl, new_data):
 	xdata, ydata, zdata = hl._verts3d
@@ -85,45 +85,52 @@ class FollowTrajectory:
             
 
         done=0
+        position=[0,0,0]
         for t in count(): 
             
             for point in trajectory:
-            
+                #print (point,position)
                 img,state=proc.get_image(self)
-                data=self.client.getMultirotorState()
 
+                #print (state)
+                data=self.client.getMultirotorState()
+                f.write('Punto Encontrado\n')
+                print('Busqueda del punto',point)
                 a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
                 position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
-                f.write('Punto alcanzado \n')
-                time.sleep(3)
-                print('dirigiendo el dron hacia el primer punto')
+                time.sleep(1)
+
                 Remaining_Length=99
                 while not done and Remaining_Length>=2:         
                     delta=np.array(point-position,dtype='float32')
-
                     action = RL.select_action(self,state,torch.tensor([delta]))
                     quad_offset=RL.interpret_action(action)
                     quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
-                    self.client.moveByVelocityAsync(quad_vel.x_val, quad_offset[1], quad_offset[2], 2)
+                    self.client.moveByVelocityAsync(quad_vel.x_val,quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 2)
                     time.sleep(0.3)
                     collision_info=self.client.simGetCollisionInfo()
                     col_prob=proc.Drone_Vision(img)
                     reward,Remaining_Length=RL.Compute_reward(self,img,collision_info,col_prob,point,position)
 
                     #Observe new state
-                    last_state=state
+
                     img,next_state=proc.get_image(self)
                     data=self.client.getMultirotorState()
                     position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
-                    self.memory.push(last_state,action,next_state,torch.tensor([reward]),torch.tensor([delta]))
+                    done=RL.isDone(reward,collision_info,Remaining_Length) 
+                    
+                    if not done:
+                        pass
+                    else:
+                        #print ('He estado aqui')
+                        next_state = None
+                    
+                    self.memory.push(state,action,next_state,torch.tensor([reward]),torch.tensor([delta]))
+                    state = next_state
                     
                     loss=RL.optimize_model(self)
-                    done=RL.isDone(reward,collision_info,Remaining_Length)  
-                    
-
                     f.write(str(action.item())+', '+str(reward)+', '+str(loss)+', '+str(Remaining_Length)+','+str(point)+','+str(position)+'\n')
                     
-
                     if done:
                         self.episode_durations.append(t+1)
                         print ('Finalizando episodio')
@@ -154,8 +161,8 @@ def train_DQN(nwp,plot):
     for i_episode in range(num_episodes):
         f.write('############# EPISODIO '+str(i_episode)+'#################\n')
         print ('########### EPISODIO '+str(i_episode)+' #################')
-        trajectory=Trajectory_Generation(nwp,20,-30)
-        print (trajectory)
+        trajectory=Trajectory_Generation(nwp,20,-20)
+
         
         if plot:
             map = plt.figure()
@@ -177,15 +184,12 @@ def train_DQN(nwp,plot):
         nav.reset()
     f.close()    
         
-BATCH_SIZE = 32
-GAMMA = 0.999
-EPS_START = 0.9
-EPS_END = 0.05
+
 EPS_DECAY = 200
 TARGET_UPDATE = 10
 
 
-num_episodes=100 
+num_episodes=500
 
 
 
@@ -199,9 +203,10 @@ if __name__ == "__main__":
     parser.add_argument("--Waypoints",help="Number of waypoints",default=4)
 
     args=parser.parse_args()
-
+    
     nwp=args.Waypoints
     plot=args.Plot
+
 
     
     train_DQN(nwp,plot)
