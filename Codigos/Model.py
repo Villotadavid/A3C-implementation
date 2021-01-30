@@ -53,53 +53,36 @@ class DQN(nn.Module):
         ############# image ##################
         self.Conv1=nn.Conv2d(1, 16, (3,3))
         self.res1=res_block(16,32)
-        #self.Conv2=nn.Conv2d(16,32, (3,3))
         self.Fully1=nn.Linear(32*126*126,16)
         self.ReLu=nn.ReLU()
         self.dropout = nn.Dropout2d(p=0.5)
         
         ############# Waypoint ###############
-        self.Fully2=nn.Linear(3,9)
-        self.Fully3=nn.Linear(9,16)
+        self.Fully2=nn.Linear(3,16)
         
         ############# TOGETHER ###############
-        self.Fully4=nn.Linear(32,16)
-        self.Fully5=nn.Linear(16,9)
-        
-        ############# TOGETHER ###############
-        self.softmax=nn.Softmax(1)
+        self.Fully4=nn.Linear(32,9)
+
         
     def forward(self,img,wp):
         
         img=img.float()
+        wp = wp.float()
         img=self.Conv1(img)
         img=self.ReLu(img)
         img=self.res1(img)
-        #img=self.Conv2(img)
-        #img=self.ReLu(img)
         img=img.view(-1, 126 * 126 * 32)
 
-
         img=self.Fully1(img)
-        img=self.ReLu(img) 
-        #.register_hook(lambda grad : torch.clamp(grad, min = 0))     
+        img=self.ReLu(img)
         
         wp=self.Fully2(wp)
         wp=self.ReLu(wp)
-        wp=self.Fully3(wp)
-        wp=self.ReLu(wp)
 
         x=torch.cat((img,wp),dim=1)
-        #x.register_hook(lambda grad: print("Gradients less than zero:", bool((grad < 0).any())))  
-       
-        x=self.Fully4(x)
-        x=self.ReLu(x) 
-        x=self.Fully5(x)
-        x=self.ReLu(x)
-        #print ('######'+str(self.count))
-        #print (x)
-        #x=self.softmax(x)
 
-        #○x=self.dropout(x)
-        self.count+=1
+        x=self.Fully4(x)
+        x=self.ReLu(x)
+        x=self.dropout(x)
+
         return (x)

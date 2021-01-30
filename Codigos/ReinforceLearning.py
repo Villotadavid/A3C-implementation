@@ -24,6 +24,7 @@ import ImgProc as proc
 
 
 def interpret_action(action):
+    print (action)
     scaling_factor = 0.5
     if action == 0:
         quad_offset = (0, -scaling_factor, -scaling_factor)
@@ -49,11 +50,11 @@ def interpret_action(action):
 
 ################### COMPUTE REWARD ##################################
 
-def Compute_reward(self,img ,collision_info ,col_prob ,wp2 ,position ):      #The position should be the output of the neural network
+def Compute_reward(img ,collision_info ,wp2 ,position ):      #The position should be the output of the neural network
     global prev_position
     global prev_reward
     if collision_info.has_collided or position==prev_position:
-        R=-100
+        R=-10
         L= 999
     else:
         A_l=proc.Drone_Vision(img)                           #A_l Área Libre
@@ -64,18 +65,17 @@ def Compute_reward(self,img ,collision_info ,col_prob ,wp2 ,position ):      #Th
             R_l=40
         else:
             
-            R_l=1/(L+1)*50
+            R_l=R_l=-1*L+40
             
-        R_cp=-10*A_l/(128*128)
-        R=R_l+R_cp
+        #R_cp=-10*A_l/(128*128)
+        R=R_l #R_cp
         
-    if prev_reward>R:
+    '''if prev_reward>R:
         R=R-5
     else:
-        R=R+5
+        R=R+5'''
         
     prev_position=position 
-
     return R,L
 
 
@@ -108,16 +108,15 @@ def select_action(self,state,wp):
     sample=random.random()
     eps_threshold=EPS_END+(EPS_START-EPS_END)*math.exp(-1.0*steps_done/EPS_DECAY)
     steps_done+=1
-
+    sample=999
     if sample > eps_threshold:
-        with torch.no_grad(): #no_grad()-> Disable gradient calculation. Useful for interference,when Tensor.bakward() cannot be called
-                              #It reduces memory consumtion for computations
-            # t.max(1) will return largest column value of each row.
-            # second column on max result is index of where max element was
-            # found, so we pick action with the larger expected reward.
+        with torch.no_grad():
+
             state, wp = state.to(self.device), wp.to(self.device)
+            print(self.policy_net(state, wp / 100))
             return  self.policy_net(state,wp/100).max(1)[1].view(1,1)
     else:
+        print('Random')
         return torch.tensor([[random.randrange(9)]],device=self.device,dtype=torch.long)
         
 ################### OPTIMIZE MODEL ##################################
@@ -127,7 +126,6 @@ def optimize_model(self):
     if len(self.memory) < BATCH_SIZE:
         return 0
     transitions=self.memory.sample(BATCH_SIZE)
-
     batch=Transition(*zip(*transitions))
     
     non_final_mask=torch.tensor(tuple(map(lambda s: s is not None,batch.next_state)),device=self.device, dtype=torch.bool)
@@ -136,7 +134,6 @@ def optimize_model(self):
     non_final_next_delta=torch.cat(batch.delta[0:len(non_final_next_states)])
  
     state_batch=torch.cat(batch.state)
-
     action_batch=torch.cat(batch.action)
     delta_batch=torch.cat(batch.delta)
     reward_batch=torch.cat(batch.reward)
@@ -150,7 +147,6 @@ def optimize_model(self):
     next_state_values=torch.zeros(BATCH_SIZE,device=self.device)
     non_final_next_states,non_final_next_delta = non_final_next_states.to(self.device),non_final_next_delta.to(self.device)
 
-    
     next_state_values[non_final_mask]=self.target_net(non_final_next_states,non_final_next_delta/100).max(1)[0].detach()
     
     ######### Q-values (Belleman equation) #####################
@@ -160,18 +156,17 @@ def optimize_model(self):
     ########## Compute Huber loss #######################
 
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
-    #print(loss)
+
     # Optimize the model
     
     self.optimizer.zero_grad()
     
     loss.backward()  
                  
-
-    for param in self.policy_net.parameters():          
-        #print (param.grad)
+    n=0
+    for param in self.policy_net.parameters():
+        n+=1
         param.grad.data.clamp_(-1, 1)
-    
     self.optimizer.step()                               
     
     return loss.item()
@@ -179,17 +174,17 @@ def optimize_model(self):
     
 def isDone(reward,collision,L):
     done = 0
-    if  reward <= -60 or collision.has_collided==True or L>=40:
+    if  reward <= -10 or collision.has_collided==True or L>=40:
         done = 1
     return done
 
 
  
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 200
+EPS_DECAY = 400
 TARGET_UPDATE = 10
 steps_done=0
 prev_position=[0,0,0]
