@@ -41,19 +41,23 @@ def find_center(img, contour):
 
     for x in range(0, xmax):
         for y in range(0, ymax):
-            if (img[x, y] != 255 and cv2.pointPolygonTest(contour, (y, x), True) >= 0):
+            if (img[x, y] != 0 and cv2.pointPolygonTest(contour, (y, x), True) >= 0):
                 count += 1
+
         return count
 
 
 def Drone_Vision(png_image):
-
-    t, png_image = cv2.threshold(png_image, 15, 255, cv2.THRESH_BINARY)
-    png_image = cv2.GaussianBlur(png_image, (3, 3), 3)
-    t, png_image = cv2.threshold(png_image, 0, 255, cv2.THRESH_BINARY)
+    cv2.imshow('Current Frame', png_image)
+    cv2.waitKey(1)
+    print (np.mean(png_image))
+    t, png_image = cv2.threshold(png_image, 64, 150, cv2.THRESH_BINARY)             #0=Cercano
+    png_image = cv2.GaussianBlur(png_image, (3, 3), 3)                              #255=Lejano
+    t, png_image = cv2.threshold(png_image, 0, 200, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(
         np.uint8(png_image), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     maxArea = 0
+    #print (contours)
     if not contours:
         count=0
     else:
@@ -61,15 +65,20 @@ def Drone_Vision(png_image):
             area = cv2.contourArea(c)
             if area > maxArea:
                 maxArea = area
-                IdMaxArea = c
-        count = find_center(png_image, IdMaxArea)
+                IdMaxArea=c
+        #count = find_center(png_image, IdMaxArea)
 
+        count= maxArea/(128*128.0)
+        img=np.zeros((128,128))
+        cv2.drawContours(img, IdMaxArea,-1,255)
+        cv2.imshow('Current Frame', img)
+        cv2.waitKey(1)
     return count
 
 
 def get_image(self):
     responses = self.client.simGetImages(
-        [airsim.ImageRequest("1", 3, pixels_as_float=True)])
+        [airsim.ImageRequest("1", 2, pixels_as_float=True)])
     response = responses[0]
     img = airsim.list_to_2d_float_array(
         response.image_data_float, response.width, response.height)
@@ -77,6 +86,7 @@ def get_image(self):
     img = np.ascontiguousarray(img, dtype=np.float64) / 255
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
+
     return img, self.process(img/np.max(img)).unsqueeze(0).to(self.device)
 
 '''if __name__=='__main__':

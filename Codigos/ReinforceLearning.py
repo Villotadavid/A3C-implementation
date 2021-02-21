@@ -24,8 +24,8 @@ import ImgProc as proc
 
 
 def interpret_action(action):
-    print (action)
-    scaling_factor = 0.5
+    #print (action)
+    scaling_factor = 0.25
     if action == 0:
         quad_offset = (0, -scaling_factor, -scaling_factor)
     elif action == 1:
@@ -50,32 +50,24 @@ def interpret_action(action):
 
 ################### COMPUTE REWARD ##################################
 
-def Compute_reward(img ,collision_info ,wp2 ,position ):      #The position should be the output of the neural network
+global prev_reward
+def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
-    global prev_reward
+    #coll_prob = proc.Drone_Vision(img)
     if collision_info.has_collided or position==prev_position:
         R=-10
         L= 999
+        print ('Collision')
     else:
-        A_l=proc.Drone_Vision(img)                           #A_l Área Libre
-        #proc.data_image(action,Correct_action,img)          #Displays objective area
-        
+        R_c=66
         L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
         if L<=2:
-            R_l=40
+            R_l=50
         else:
-            
             R_l=R_l=-1*L+40
-            
-        #R_cp=-10*A_l/(128*128)
-        R=R_l #R_cp
-        
-    '''if prev_reward>R:
-        R=R-5
-    else:
-        R=R+5'''
-        
-    prev_position=position 
+
+        R=R_l+num*50 #+R_c
+    prev_position=position
     return R,L
 
 
@@ -94,7 +86,7 @@ class ReplayMemory(object):
             self.memory.append(None)
         self.memory[self.position]=Transition(*args)
         self.position=(self.position+1)%self.capacity
-        
+        return self.position
     def sample(self,batch_sizes):
         return random.sample(self.memory, batch_sizes)
     
@@ -113,18 +105,17 @@ def select_action(self,state,wp):
         with torch.no_grad():
 
             state, wp = state.to(self.device), wp.to(self.device)
-            print(self.policy_net(state, wp / 100))
-            return  self.policy_net(state,wp/100).max(1)[1].view(1,1)
+            a=self.policy_net(state, wp / 20)
+            return a.max(1)[1].view(1,1),a.cpu().detach().numpy()[0]
     else:
-        print('Random')
-        return torch.tensor([[random.randrange(9)]],device=self.device,dtype=torch.long)
+        return torch.tensor([[random.randrange(9)]],device=self.device,dtype=torch.long),0
         
 ################### OPTIMIZE MODEL ##################################
         
 def optimize_model(self):
 
     if len(self.memory) < BATCH_SIZE:
-        return 0
+        return 0,0,0,0
     transitions=self.memory.sample(BATCH_SIZE)
     batch=Transition(*zip(*transitions))
     
@@ -139,15 +130,16 @@ def optimize_model(self):
     reward_batch=torch.cat(batch.reward)
 
     ######### Q(s_t) #####################
+
     state_batch,delta_batch,reward_batch = state_batch.to(self.device),delta_batch.to(self.device),reward_batch.to(self.device)
-    state_action_values=self.policy_net(state_batch,delta_batch/100).gather(1,action_batch) #??
+    state_action_values=self.policy_net(state_batch,delta_batch/20).gather(1,action_batch) #??
 
     ######### V(s_{t+1}) #####################
     
     next_state_values=torch.zeros(BATCH_SIZE,device=self.device)
     non_final_next_states,non_final_next_delta = non_final_next_states.to(self.device),non_final_next_delta.to(self.device)
 
-    next_state_values[non_final_mask]=self.target_net(non_final_next_states,non_final_next_delta/100).max(1)[0].detach()
+    next_state_values[non_final_mask]=self.target_net(non_final_next_states,non_final_next_delta/20).max(1)[0].detach()
     
     ######### Q-values (Belleman equation) #####################
     
@@ -162,14 +154,14 @@ def optimize_model(self):
     self.optimizer.zero_grad()
     
     loss.backward()  
-                 
-    n=0
+
     for param in self.policy_net.parameters():
-        n+=1
         param.grad.data.clamp_(-1, 1)
-    self.optimizer.step()                               
-    
-    return loss.item()
+    self.optimizer.step()
+
+    #state_action_values = zip(*state_action_values)
+    #print (state_action_values)
+    return loss.item(),next_state_values.cpu().detach().numpy(),state_action_values.unsqueeze(0).cpu().detach().numpy(),expected_state_action_values.cpu().detach().numpy()
     
     
 def isDone(reward,collision,L):
@@ -184,7 +176,7 @@ BATCH_SIZE = 64
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 400
+EPS_DECAY = 100
 TARGET_UPDATE = 10
 steps_done=0
 prev_position=[0,0,0]
