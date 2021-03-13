@@ -7,9 +7,11 @@ from A3C.pytorch_A3C_F.utils import v_wrap, set_init, push_and_pull, record
 from A3C.pytorch_A3C_F.shared_adam import SharedAdam
 import gym
 import math, os
-from Workers import Worker, Net
-import Model
-
+from Workers import Worker
+from Model_A3C import Net
+import time
+import csv
+import argparse
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -17,30 +19,70 @@ UPDATE_GLOBAL_ITER = 5
 GAMMA = 0.9
 MAX_EP = 3000
 
+parser = argparse.ArgumentParser(description='A3C')
+parser.add_argument('--lr', type=float, default=0.0001,
+                    help='learning rate (default: 0.0001)')
+parser.add_argument('--gamma', type=float, default=0.99,
+                    help='discount factor for rewards (default: 0.99)')
+parser.add_argument('--gae-lambda', type=float, default=1.00,
+                    help='lambda parameter for GAE (default: 1.00)')
+parser.add_argument('--entropy-coef', type=float, default=0.01,
+                    help='entropy term coefficient (default: 0.01)')
+parser.add_argument('--value-loss-coef', type=float, default=0.5,
+                    help='value loss coefficient (default: 0.5)')
+parser.add_argument('--max-grad-norm', type=float, default=50,
+                    help='value loss coefficient (default: 50)')
+parser.add_argument('--seed', type=int, default=1,
+                    help='random seed (default: 1)')
+parser.add_argument('--num-processes', type=int, default=1,
+                    help='how many training processes to use (default: 4)')
+parser.add_argument('--num-steps', type=int, default=20,
+                    help='number of forward steps in A3C (default: 20)')
+parser.add_argument('--max-episode-length', type=int, default=1000000,
+                    help='maximum length of an episode (default: 1000000)')
+parser.add_argument('--env-name', default='PongDeterministic-v4',
+                    help='environment to train on (default: PongDeterministic-v4)')
+parser.add_argument('--no-shared', default=False,
+                    help='use an optimizer without shared momentum.')
+
 
 
 if __name__ == "__main__":
-    gnet = Model.DQN()          # global network
-    gnet.share_memory()         # share the global parameters in multiprocessing
+
                                 # Comparte la dirección de memoria para todos los procesos
+    seed=1
+    torch.manual_seed(seed)
 
-    opt = SharedAdam(gnet.parameters(), lr=1e-4, betas=(0.95, 0.999))  # global optimizer
-    global_ep, global_ep_r, res_queue = mp.Value('i', 0), mp.Value('d', 0.), mp.Queue()
-    # parallel training
-    workers = [Worker(gnet, opt, global_ep, global_ep_r, res_queue, i) for i in range(mp.cpu_count()-3)]
-    print (workers)
-    [w.start() for w in workers]
-    res = []                    # record episode reward to plot
-    while True:
-        r = res_queue.get()
-        if r is not None:
-            res.append(r)
+    args = parser.parse_args()
+
+    shared_model = Net(1,5).double()
+    shared_model.share_memory()
+
+    counter = mp.Value('i', 0)
+    lock = mp.Lock()
+
+    processes = []
+    name=0
+    File=True
+    log=[]
+    while File:
+        File=os.path.exists('Training_data_'+str(name)+'.csv')
+
+        if File:
+            pass
         else:
-            break
-    [w.join() for w in workers]
+            csv_file='Training_data_'+str(name) + '.csv'
+            csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
+            csvfile = csv.writer(csvopen, delimiter=';')
+            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action'])
+        name += 1
 
-    import matplotlib.pyplot as plt
-    plt.plot(res)
-    plt.ylabel('Moving average ep reward')
-    plt.xlabel('Step')
-    plt.show()
+    for name in range(0, mp.cpu_count()-3):
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file))
+        time.sleep(2)
+        p.start()
+        processes.append(p)
+    [p.join() for w in processes]
+
+
+

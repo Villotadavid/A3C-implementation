@@ -32,7 +32,7 @@ def weights_init(m):
 # Making the A3C brain
 
 class Net(nn.Module):
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, action_space):
         super(Net, self).__init__()
 
         self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
@@ -40,14 +40,9 @@ class Net(nn.Module):
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
 
-        self.Fully2=nn.Linear(3,16)
-        self.Fully4 = nn.Linear(32, 9)
-        self.ReLu = nn.ReLU()
-        self.Fully1=nn.Linear(32*8*8,16)
-        self.ReLu=nn.ReLU()
+        self.lstm = nn.LSTMCell(32 * 8 * 8, 256)
 
-        self.lstm = nn.LSTMCell(32, 256)
-
+        num_outputs = 4
         self.critic_linear = nn.Linear(256, 1)
         self.actor_linear = nn.Linear(256, num_outputs)
 
@@ -69,30 +64,27 @@ class Net(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        img,delta, (hx, cx) = inputs
-        (hx, cx)=(hx.double(), cx.double())
-        img = img.double()
-        delta=delta.double()
 
+        img = inputs.double()
+        print(type(inputs))
         x = F.elu(self.conv1(img))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
+
         x = x.view(-1, 32 * 8 * 8)
-
-        delta=self.Fully2(delta)
-        delta=self.ReLu(delta)
-
-        x=self.Fully1(x)
-        x=self.ReLu(x)
-
-        x = torch.cat((x, delta), dim=1)
-
-        hx, cx = self.lstm(x,(hx,cx))
+        hx, cx = self.lstm(x)
         x = hx
 
         return self.critic_linear(x), self.actor_linear(x), (hx, cx)
 
+    def choose_action(self, state,delta):
+        self.training = False
+        mu, sigma, _ = self.forward(state) #Hay que meter DELTA
+        print (mu,sigma)
+        print (mu.size(),sigma.size())
+        m = self.distribution(mu.view(1, ).data, sigma.view(1, ).data)
+        return m.sample().numpy()
 
     def loss_func(self, s, a, v_t):
         self.train()

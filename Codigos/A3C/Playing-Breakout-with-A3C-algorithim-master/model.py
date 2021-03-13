@@ -6,31 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Initializing and setting the variance of a tensor of weights
-def normalized_columns_initializer(weights, std=1.0):
-    out = torch.randn(weights.size())
-    out *= std / torch.sqrt(out.pow(2).sum(1).expand_as(out)) # thanks to this initialization, we have var(out) = std^2
-    return out
 
-# Initializing the weights of the neural network in an optimal way for the learning
-def weights_init(m):
-    classname = m.__class__.__name__ # python trick that will look for the type of connection in the object "m" (convolution or full connection)
-    if classname.find('Conv') != -1: # if the connection is a convolution
-        weight_shape = list(m.weight.data.size()) # list containing the shape of the weights in the object "m"
-        fan_in = np.prod(weight_shape[1:4]) # dim1 * dim2 * dim3
-        fan_out = np.prod(weight_shape[2:4]) * weight_shape[0] # dim0 * dim2 * dim3
-        w_bound = np.sqrt(6. / (fan_in + fan_out)) # weight bound
-        m.weight.data.uniform_(-w_bound, w_bound) # generating some random weights of order inversely proportional to the size of the tensor of weights
-        m.bias.data.fill_(0) # initializing all the bias with zeros
-    elif classname.find('Linear') != -1: # if the connection is a full connection
-        weight_shape = list(m.weight.data.size()) # list containing the shape of the weights in the object "m"
-        fan_in = weight_shape[1] # dim1
-        fan_out = weight_shape[0] # dim0
-        w_bound = np.sqrt(6. / (fan_in + fan_out)) # weight bound
-        m.weight.data.uniform_(-w_bound, w_bound) # generating some random weights of order inversely proportional to the size of the tensor of weights
-        m.bias.data.fill_(0) # initializing all the bias with zeros
-
-# Making the A3C brain
 
 class ActorCritic(torch.nn.Module):
 

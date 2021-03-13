@@ -24,7 +24,7 @@ import ImgProc as proc
 
 
 def interpret_action(action):
-    #print (action)
+
     scaling_factor = 0.25
     if action == 0:
         quad_offset = (0, -scaling_factor, -scaling_factor)
@@ -53,18 +53,17 @@ def interpret_action(action):
 global prev_reward
 def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
-    #coll_prob = proc.Drone_Vision(img)
+    num=0
     if collision_info.has_collided or position==prev_position:
         R=-10
         L= 999
-        print ('Collision')
     else:
         R_c=66
         L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
         if L<=2:
             R_l=50
         else:
-            R_l=R_l=-1*L+40
+            R_l=-1*L+40
 
         R=R_l+num*50 #+R_c
     prev_position=position
@@ -160,7 +159,7 @@ def optimize_model(self):
     self.optimizer.step()
 
     #state_action_values = zip(*state_action_values)
-    #print (state_action_values)
+
     return loss.item(),next_state_values.cpu().detach().numpy(),state_action_values.unsqueeze(0).cpu().detach().numpy(),expected_state_action_values.cpu().detach().numpy()
     
     

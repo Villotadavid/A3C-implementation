@@ -50,7 +50,6 @@ def find_center(img, contour):
 def Drone_Vision(png_image):
     cv2.imshow('Current Frame', png_image)
     cv2.waitKey(1)
-    print (np.mean(png_image))
     t, png_image = cv2.threshold(png_image, 64, 150, cv2.THRESH_BINARY)             #0=Cercano
     png_image = cv2.GaussianBlur(png_image, (3, 3), 3)                              #255=Lejano
     t, png_image = cv2.threshold(png_image, 0, 200, cv2.THRESH_BINARY)
@@ -76,18 +75,21 @@ def Drone_Vision(png_image):
     return count
 
 
-def get_image(self):
-    responses = self.client.simGetImages(
-        [airsim.ImageRequest("1", 2, pixels_as_float=True)])
+
+def get_image(client):
+    process = T.Compose([T.ToTensor()])
+    responses = client.simGetImages(
+        [airsim.ImageRequest("1", 3, pixels_as_float=True)])
     response = responses[0]
     img = airsim.list_to_2d_float_array(
         response.image_data_float, response.width, response.height)
     # print(np.max(img/255),np.max(img))
     img = np.ascontiguousarray(img, dtype=np.float64) / 255
     img = cv2.resize(img, (128, 128))
+
     # np.array could be dispensable
 
-    return img, self.process(img/np.max(img)).unsqueeze(0).to(self.device)
+    return img, process(img/np.max(img)).unsqueeze(0).to('cpu')
 
 '''if __name__=='__main__':
     data_image()'''

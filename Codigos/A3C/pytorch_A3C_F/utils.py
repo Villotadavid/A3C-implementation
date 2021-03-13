@@ -1,6 +1,3 @@
-"""
-Functions that use multiple times
-"""
 
 from torch import nn
 import torch
@@ -24,6 +21,7 @@ def push_and_pull(opt, lnet, gnet, done, s_, bs, ba, br, gamma):
         v_s_ = 0.               # terminal
     else:
         v_s_ = lnet.forward(v_wrap(s_[None, :]))[-1].data.numpy()[0, 0]
+        print (v_s_)
 
     buffer_v_target = []
     for r in br[::-1]:    # reverse buffer r
