@@ -15,8 +15,8 @@ def Trajectory_Generation(Waypoints,D,Z):
     nwp=Waypoints+2
     Waypoints=np.empty([nwp,3],dtype=np.float32)
     x,y=0,0
-    Waypoints[0]=[0,0,-10]
-    for wp in range(1,nwp-1):
+    #Waypoints[0]=[0,0,-10]
+    for wp in range(0,nwp-1):
         Alpha=np.random.randint(360)
         z=np.random.randint(-Z)
         x=x+D*math.cos(Alpha)

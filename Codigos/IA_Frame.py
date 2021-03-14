@@ -1,36 +1,36 @@
+# -*- coding: utf-8 -*-
+
 import setup_path 
 import airsim
-import os
-import sys
-import math
 import time
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
-import cv2
+import csv
 
 from RandomTrajectory import Trajectory_Generation
 import Model
 import ImgProc as proc
 import ReinforceLearning as RL
-from itertools import count
+
 
 import torch
-import torch.nn as nn
+from torchsummary import summary
 import torch.optim as optim
-import torch.nn.functional as F
+
 import torchvision.transforms as T
 from PIL import Image
 
-plt.style.use('ggplot')
+
+
 
 def update_line(hl, new_data):
 	xdata, ydata, zdata = hl._verts3d
 	hl.set_xdata(list(np.append(xdata, new_data[0])))
 	hl.set_ydata(list(np.append(ydata, new_data[1])))
 	hl.set_3d_properties(list(np.append(zdata, new_data[2])))
-	plt.draw()
+	#plt.draw()
 
 
 class FollowTrajectory:
@@ -42,75 +42,116 @@ class FollowTrajectory:
         self.resize = T.Compose([T.ToPILImage(),
                     T.Resize(40, interpolation=Image.CUBIC),
                     T.ToTensor()])
-        use_cuda = torch.cuda.is_available()
-        self.device = torch.device("cuda:0" if use_cuda else "cpu")
+
+        self.use_cuda = torch.cuda.is_available()
+        self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
+        print (self.device)
+        self.memory= RL.ReplayMemory(5000)
+        self.policy_net = Model.DQN().to(self.device)
+        self.policy_net.load_state_dict(torch.load('C:/Users/usuario/Desktop/Doctorado/Codigos/models/Weights_5460.pt'))
+        self.target_net = Model.DQN().to(self.device)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+
+        self.optimizer=optim.RMSprop(self.policy_net.parameters())
 
 
-    def start(self,trajectory,ax):
+        self.process = T.Compose([T.ToTensor()])
+        self.episode_durations = []
+
+    def reset(self):
+        self.client.reset()
+        self.client = airsim.MultirotorClient()
+        self.client.confirmConnection()
+        self.client.enableApiControl(True)
+
+    def start(self,trajectory,ax,csvfile,i_episode):
 
         print("arming the drone...")
         self.client.armDisarm(True)
 
         landed = self.client.getMultirotorState().landed_state
         if landed == airsim.LandedState.Landed: 
-            self.client.takeoffAsync().join()            
+            self.client.takeoffAsync().join()
             
+            print ('Despegando...')
+            time.sleep(2)
+            self.client.moveToPositionAsync(0, 0, -10, 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
         if plot:
             droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
             
-        
-        pt=0
-        for point in trajectory:
+        num=0
+        done=0
+        position=[0,0,0]
+
             
-            img,state=proc.get_image(self,process,device)
-            data=self.client.getMultirotorState()
-            position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,-data.kinematics_estimated.position.z_val]
-            for t in count():         #loop while moveToPosition finishes and has not collided
-                
-                action = RL.select_action(self,state)
-                quad_offset=RL.interpret_action(action)
-                quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
-                self.client.moveByVelocityAsync(2, quad_vel.y_val+quad_offset[1], quad_vel.z_val+quad_offset[2], 2).join()
-                collision_info=self.client.simGetCollisionInfo()
-                col_prob=proc.Drone_Vision(img)
-                reward=RL.Compute_reward(self,img,collision_info,col_prob,trajectory[pt+1],position)
-                
-                #Observe new state
-                last_state=state
-                img,next_state=proc.get_image(self,process,device)
+        for point in trajectory:
+                img,state=proc.get_image(self)
+
                 data=self.client.getMultirotorState()
-                position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,-data.kinematics_estimated.position.z_val]
-                memory.push(last_state,action,next_state,torch.tensor([reward]))
-                RL.optimize_model(self)
-                done=RL.isDone(reward,collision_info)  
-                
 
-                if done:
-                    episode_durations.append(t+1)
-                    break
-                                    
-                if plot:
-                    position = data.kinematics_estimated.position
-                    update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
-                    plt.pause(0.25)
+                print('Busqueda del punto',point)
+                a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
+
+                position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
+                time.sleep(1.5)
+                quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
+
+                Remaining_Length=99
+
+                while not done and Remaining_Length>=2:
+                    delta=np.array(point-position,dtype='float32')
+                    action,NN_output = RL.select_action(self,state,torch.tensor([delta]))
+                    quad_offset=RL.interpret_action(action)
+                    self.client.moveByVelocityAsync(quad_vel.x_val,quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
+                    collision_info=self.client.simGetCollisionInfo()
+                    reward,Remaining_Length=RL.Compute_reward(img,collision_info,point,position,num)
+                    quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
+
+                    #Observe new state
+
+                    img,next_state=proc.get_image(self)
+                    data=self.client.getMultirotorState()
+                    position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
+                    done=RL.isDone(reward,collision_info,Remaining_Length)
                     
-            pt+=1       
+                    if not done:
+                        pass
+                    else:
+                        next_state = None
+                    
+                    INDEX=self.memory.push(state,action,next_state,torch.tensor([reward]),torch.tensor([delta]))
+                    state = next_state
+                    
+                    loss,V_Funct,Q_funct,Belleman=RL.optimize_model(self)
 
-           
+                    csvfile.writerow([INDEX,i_episode,action.item(),round(reward,2),round(Remaining_Length,2),round(loss,2),NN_output,point,np.around(position,decimals=2)])
+                    if done:
+                        #self.episode_durations.append(t+1)
+                        print ('Finalizando episodio')
+                        break
+                                    
+                    if plot:
+                        position = data.kinematics_estimated.position
+                        update_line(droneline,[position.x_val ,position.y_val,-position.z_val])
 
-        print("landing...")
-        self.client.landAsync().join()
-
-        print("disarming.")
-        self.client.armDisarm(False)
+                num += 1
+                if done:
+                    break
 
 
-def train_DQN(nav,nwp,plot):
+def train_DQN(nwp,plot):
     
-    for i_episode in range(num_episodes):
-        
-        trajectory=Trajectory_Generation(nwp,20,-30)
-        
+
+    csvopen=open('Training_data.csv','w',newline='')
+    csvfile=csv.writer(csvopen)
+    csvfile.writerow(['Index','Episode','Action', 'Reward', 'Remaining length' , 'Loss','NN Output' ,'Punto objetivo','Posición actual'])
+    nav = FollowTrajectory()
+    
+    for i_episode in range(start_episode,start_episode+num_episodes):
+        print ('########### EPISODIO '+str(i_episode)+' #################')
+        trajectory=Trajectory_Generation(nwp,20,-20)
+
         if plot:
             map = plt.figure()
             ax = Axes3D(map)
@@ -124,49 +165,33 @@ def train_DQN(nav,nwp,plot):
         else:
             ax=0
 
-        nav.start(trajectory,ax)
+        nav.start(trajectory,ax,csvfile,i_episode)
         
+        if i_episode % TARGET_UPDATE ==0:
+                nav.target_net.load_state_dict(nav.policy_net.state_dict())
+        nav.reset()
+
+        if i_episode % 10 == 0:
+            torch.save(nav.policy_net.state_dict(), Model_PATH+'Weights_'+str(i_episode)+'.pt')
+            print ('Saving Model for :'+ str(i_episode)+'th episode')
         
-BATCH_SIZE = 32
-GAMMA = 0.999
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 200
+
+
+Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
 TARGET_UPDATE = 10
-
-steps_done=0
-num_episodes=5 
-
-
-   
-use_cuda = torch.cuda.is_available()
-device = torch.device("cpu")   #"cuda:0" if use_cuda else "cpu")
- 
-policy_net = Model.DQN().to(device)
-target_net = Model.DQN().to(device)
-target_net.load_state_dict(policy_net.state_dict())
-target_net.eval()
-
-optimizer=optim.RMSprop(policy_net.parameters())
-memory= RL.ReplayMemory(10000)
-
-process = T.Compose([T.ToTensor()])
-episode_durations = []
-
+num_episodes=10000
+start_episode=5460
 
 if __name__ == "__main__":  
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--Plot",help="Get a plot of the trajectories",default=False)
-    parser.add_argument("--Waypoints",help="Number of waypoints",default=6)
+    parser.add_argument("--Waypoints",help="Number of waypoints",default=5)
 
     args=parser.parse_args()
-
+    
     nwp=args.Waypoints
     plot=args.Plot
 
-    nav = FollowTrajectory()
-    
-    train_DQN(nav,nwp,plot)
-
+    train_DQN(nwp,plot)
 
