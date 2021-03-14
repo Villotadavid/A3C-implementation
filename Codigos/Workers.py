@@ -7,8 +7,8 @@ from Model_A3C import Net
 from A3C_utils import *
 import csv
 
-MAX_EP = 5
-MAX_EP_STEP = 100
+MAX_EP = 100000
+MAX_EP_STEP = 200
 UPDATE_GLOBAL_ITER=10
 seed=1
 
@@ -25,7 +25,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
         lnet = Net(1,5).double()           # local network
         torch.manual_seed(args.seed + id)
 
-        client, Process = create_env(id)
+        client=airsim.MultirotorClient(ip='127.0.0.'+str(id+1))
         total_step = 1
         done=True
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
@@ -136,4 +136,3 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
             optimizer.step()
             num_ep+=1
 
-        Process.terminate()

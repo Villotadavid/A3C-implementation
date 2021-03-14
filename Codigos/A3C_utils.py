@@ -46,20 +46,18 @@ class ReplayMemory(object):
 ################### CREATE EMVIRONMENTS ##################################
 
 sett_dir='C:/Users/davillot/Documents/AirSim'
+
 def create_env(client_num):
-    print (client_num)
+
     sett_name='/settings'+str(client_num)+'.json'
-    print (sett_dir+sett_name)
     os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
     print ('127.0.0.'+str(client_num+1))
     time.sleep(3)
     p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
-    time.sleep(5)
+    time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
 
-    client= airsim.MultirotorClient(ip='127.0.0.'+str(client_num+1))
 
-    return client,p
 
 def client_start(client):
     client.reset()
@@ -68,8 +66,6 @@ def client_start(client):
     landed = client.getMultirotorState().landed_state
     if landed == airsim.LandedState.Landed:
         client.takeoffAsync().join()
-
-        print('Despegando...')
         time.sleep(2)
 
 
@@ -138,7 +134,7 @@ def interpret_action(action):
         angular = True
         quad_offset = (0, 0, -angular_scaling_factor)
     elif action == 4:
-        angular = True
+        angular = False
         quad_offset = (+linear_scaling_factor*3, 0, 0)
 
     return quad_offset,angular

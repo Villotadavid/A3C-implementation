@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from utils import v_wrap, set_init, push_and_pull, record
-#from A3C.pytorch_A3C_F.shared_adam import SharedAdam
+from A3C_utils import *
 import gym
 import math, os
 from Workers import Worker
@@ -75,9 +75,12 @@ if __name__ == "__main__":
             csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
             csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action'])
-        name += 1♥
+        name += 1
 
-    for name in range(0, mp.cpu_count()-13):
+    for i in range (0,mp.cpu_count()-10):
+        create_env(i)
+
+    for name in range(0, mp.cpu_count()-10):
         p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file))
         time.sleep(2)
         p.start()
