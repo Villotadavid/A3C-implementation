@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import torchvision.transforms as T
 
-from A3C.pytorch_A3C_F.utils import v_wrap, set_init, push_and_pull, record
+from utils import v_wrap, set_init, push_and_pull, record
 import os
 import subprocess
 import time
@@ -45,7 +45,7 @@ class ReplayMemory(object):
 
 ################### CREATE EMVIRONMENTS ##################################
 
-sett_dir='C:/Users/usuario/Documents/AirSim'
+sett_dir='C:/Users/davillot/Documents/AirSim'
 def create_env(client_num):
     print (client_num)
     sett_name='/settings'+str(client_num)+'.json'
@@ -53,7 +53,7 @@ def create_env(client_num):
     os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
     print ('127.0.0.'+str(client_num+1))
     time.sleep(3)
-    p = subprocess.Popen('C:/Users/usuario/Documents/Forest/Forest.exe')
+    p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
     time.sleep(5)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
 

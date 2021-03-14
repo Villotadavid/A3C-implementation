@@ -33,7 +33,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
         point[0], point[1], point[2] = 30, 15, -20
         num_ep=0
         while num_ep < MAX_EP:
-
+            print (name+'--> Episiodio nº: '+str(num_ep))
             client_start(client)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
@@ -94,15 +94,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
                     counter.value += 1
 
                 if done:
-                    # episode_durations.append(t+1)
-                    print('Finalizando episodio')
+
                     break
 
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item()])
 
                 total_step += 1
 
-            print (log_data)
 
             with lock:
                 csvopen = open(csvfile_name, 'w', newline='')
