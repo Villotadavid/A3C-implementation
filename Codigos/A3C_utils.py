@@ -19,41 +19,63 @@ from Model_A3C import Net
 
 
 ################### REPLAY MEMORY ##################################
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'delta'))
 
+global position
 
-class ReplayMemory(object):
-
+class memory():
     def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
+        self.capacity=15000
+        self.values=[]
+        self.log_probs=[]
+        self.entropies=[]
 
-    def push(self, *args):
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
-        return self.position
+    def push (self,value,log_prob,reward,entropy):
 
-    def sample(self, batch_sizes):
-        return random.sample(self.memory, batch_sizes)
+        if len(a) < self.capacity:
 
-    def __len__(self):
-        return len(self.memory)
+            self.values.append(None)
+            self.log_probs.append(None)
+            self.rewards.append(None)
+            self.entropies.append(None)
+
+            self.values[position] = value
+            self.log_probs[position] =log_prob
+            self.rewards[position] =reward
+            self.entropies[position] = entropy
+
+        else:
+            del values[0]
+            del log_probs[0]
+            del rewards[0]
+            del entropies[0]
+            self.values.append(value)
+            self.log_probs.append(log_prob)
+            self.rewards.append(reward)
+            self.entropies.append(entropy)
+
 
 
 ################### CREATE EMVIRONMENTS ##################################
 
-sett_dir='C:/Users/davillot/Documents/AirSim'
+
+
 
 def create_env(client_num):
+    server=0
+
+    if server:
+        sett_dir = 'C:/Users/davillot/Documents/AirSim'
+    else:
+        sett_dir = 'C:/Users/usuario/Documents/AirSim'
 
     sett_name='/settings'+str(client_num)+'.json'
     os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
     print ('127.0.0.'+str(client_num+1))
     time.sleep(3)
-    p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
+    if server:
+        p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
+    else:
+        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/Forest.exe')
     time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
 

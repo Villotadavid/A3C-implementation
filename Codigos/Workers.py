@@ -6,6 +6,7 @@ import ReinforceLearning as RL
 from Model_A3C import Net
 from A3C_utils import *
 import csv
+import psutil
 
 MAX_EP = 100000
 MAX_EP_STEP = 200
@@ -86,6 +87,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
 
                 done = isDone(reward, collision_info, Remaining_Length)
 
+
+
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
@@ -96,11 +99,11 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
                 if done:
 
                     break
-
-                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item()])
+                memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
+                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
 
                 total_step += 1
-
+            print(len (values))
 
             with lock:
                 csvopen = open(csvfile_name, 'w', newline='')

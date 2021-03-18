@@ -74,13 +74,13 @@ if __name__ == "__main__":
             csv_file='Training_data_'+str(name) + '.csv'
             csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
-            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action'])
+            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','%CPU','%Memoria'])
         name += 1
 
-    for i in range (0,mp.cpu_count()-10):
+    for i in range (0,mp.cpu_count()-3):
         create_env(i)
 
-    for name in range(0, mp.cpu_count()-10):
+    for name in range(0, mp.cpu_count()-3):
         p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file))
         time.sleep(2)
         p.start()
