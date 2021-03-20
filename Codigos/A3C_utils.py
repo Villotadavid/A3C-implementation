@@ -164,5 +164,6 @@ def interpret_action(action):
 ############################# ACTIONS #############################
 
 def check_loop_finish(loop_finish):
+    print (loop_finish)
     while not all( element for element in loop_finish):
         pass

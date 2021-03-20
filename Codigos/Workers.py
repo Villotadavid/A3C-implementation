@@ -104,8 +104,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
 
                 total_step += 1
-                loop_finish[id]=True
-                check_loop_finish(loop_finish)
+                
+            loop_finish[id]=True
+            check_loop_finish(loop_finish)
 
             with lock:
                 csvopen = open(csvfile_name, 'a', newline='')

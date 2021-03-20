@@ -74,9 +74,10 @@ if __name__ == "__main__":
             pass
         else:
             csv_file='Training_data_'+str(name) + '.csv'
-            csvopen = open('Training_data_' + str(name) + '.csv', 'a', newline='')
+            csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
             csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','%CPU','%Memoria'])
+            csvopen.close()
         name += 1
 
     for i in range (0,num_workers):
