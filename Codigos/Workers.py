@@ -11,7 +11,7 @@ import psutil
 MAX_EP = 100000
 MAX_EP_STEP = 200
 UPDATE_GLOBAL_ITER=10
-seed=1
+#seed=1
 
 def ensure_shared_grads(model, shared_model):
     for param, shared_param in zip(model.parameters(),
@@ -24,15 +24,18 @@ def ensure_shared_grads(model, shared_model):
 def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         name='w%i' % id
         lnet = Net(1,5).double()           # local network
-        torch.manual_seed(args.seed + id)
+        #torch.manual_seed(args.seed + id)
 
         client=airsim.MultirotorClient(ip='127.0.0.'+str(id+1))
-        total_step = 1
-        done=True
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
+
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 30, 15, -20
+
+        total_step = 1
+        done=True
         num_ep=0
+
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
             client_start(client)
@@ -68,13 +71,16 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 value,policy,(hx,cx) = lnet.forward( (state,torch.tensor([delta]),(hx ,cx)))
 
                 collision_info = client.simGetCollisionInfo()
+
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
                 entropy = -(log_prob * prob).sum(1, keepdim=True)  # .sum-> Suma los valores de todos los elementos
                 entropies.append(entropy)
+
                 action = prob.multinomial(num_samples=1).detach()  #detach-> no further tracking of operations. No more gradients
                 log_prob = log_prob.gather(1, action)
-                quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
+
+                #quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
 
                 quad_offset,angular=interpret_action(action)
 
@@ -104,14 +110,18 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
 
                 total_step += 1
-                
-            loop_finish[id]=True
-            check_loop_finish(loop_finish)
 
             with lock:
                 csvopen = open(csvfile_name, 'a', newline='')
                 csvfile = csv.writer(csvopen, delimiter=';')
                 csvfile.writerows(log_data)
+                if num_ep % 10 == 0:
+                    torch.save(lnet.state_dict(),'Weights_' + str(num_ep + '.pt')
+
+
+            loop_finish[id]=True
+            check_loop_finish(loop_finish)
+
             R = torch.zeros(1, 1)
 
             if not done:
