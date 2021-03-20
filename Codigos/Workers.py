@@ -21,7 +21,7 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def Worker(lock,counter, id,shared_model,args,csvfile_name):
+def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         name='w%i' % id
         lnet = Net(1,5).double()           # local network
         torch.manual_seed(args.seed + id)
@@ -56,6 +56,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
             time.sleep(2)
             #####################   STEPS  ############################
             log_data=[]
+            loop_finish[id] = False
             for t in range(MAX_EP_STEP):
                 # Observe new state
                 img, state = proc.get_image(client)
@@ -97,16 +98,17 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name):
                     counter.value += 1
 
                 if done:
-
                     break
+
                 memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
 
                 total_step += 1
-            print(len (values))
+                loop_finish[id]=True
+                check_loop_finish(loop_finish)
 
             with lock:
-                csvopen = open(csvfile_name, 'w', newline='')
+                csvopen = open(csvfile_name, 'a', newline='')
                 csvfile = csv.writer(csvopen, delimiter=';')
                 csvfile.writerows(log_data)
             R = torch.zeros(1, 1)

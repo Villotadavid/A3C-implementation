@@ -61,7 +61,7 @@ class memory():
 
 
 def create_env(client_num):
-    server=0
+    server=1
 
     if server:
         sett_dir = 'C:/Users/davillot/Documents/AirSim'
@@ -160,3 +160,9 @@ def interpret_action(action):
         quad_offset = (+linear_scaling_factor*3, 0, 0)
 
     return quad_offset,angular
+
+############################# ACTIONS #############################
+
+def check_loop_finish(loop_finish):
+    while not all( element for element in loop_finish):
+        pass

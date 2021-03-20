@@ -13,6 +13,7 @@ import time
 import csv
 import argparse
 
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 UPDATE_GLOBAL_ITER = 5
@@ -49,7 +50,7 @@ parser.add_argument('--no-shared', default=False,
 
 if __name__ == "__main__":
 
-                                # Comparte la dirección de memoria para todos los procesos
+    num_workers=3
     seed=1
     torch.manual_seed(seed)
 
@@ -60,7 +61,8 @@ if __name__ == "__main__":
 
     counter = mp.Value('i', 0)
     lock = mp.Lock()
-
+    loop_finish=mp.Manager().list([False]*num_workers)
+    print ( not all( element for element in loop_finish))
     processes = []
     name=0
     File=True
@@ -72,16 +74,16 @@ if __name__ == "__main__":
             pass
         else:
             csv_file='Training_data_'+str(name) + '.csv'
-            csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
+            csvopen = open('Training_data_' + str(name) + '.csv', 'a', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
             csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','%CPU','%Memoria'])
         name += 1
 
-    for i in range (0,mp.cpu_count()-3):
+    for i in range (0,num_workers):
         create_env(i)
 
-    for name in range(0, mp.cpu_count()-3):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file))
+    for name in range(0, num_workers):
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish))
         time.sleep(2)
         p.start()
         processes.append(p)
