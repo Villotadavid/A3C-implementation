@@ -121,8 +121,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
 
-            loop_finish[id]=True
-            check_loop_finish(loop_finish)
+            #loop_finish[id]=True
+            #check_loop_finish(loop_finish)
 
             R = torch.zeros(1, 1)
 
