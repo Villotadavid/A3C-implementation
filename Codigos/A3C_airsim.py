@@ -45,7 +45,7 @@ parser.add_argument('--no-shared', default=False,
 
 if __name__ == "__main__":
 
-    num_workers=1
+    num_workers=4
     seed=1
     torch.manual_seed(seed)
 
@@ -78,12 +78,12 @@ if __name__ == "__main__":
     for i in range (0,num_workers):
         create_env(i)
 
-    '''for name in range(0, num_workers):
+    for name in range(0, num_workers):
         p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish))
         time.sleep(2)
         p.start()
         processes.append(p)
-    [p.join() for w in processes]'''
+    [p.join() for w in processes]
 
 
 

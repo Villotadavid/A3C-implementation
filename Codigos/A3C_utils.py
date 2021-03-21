@@ -67,7 +67,7 @@ def create_env(client_num):
 
     sett_name='/settings'+str(client_num)+'.json'
     os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
-    print ('127.0.0.'+str(client_num+10))
+    print ('127.0.0.'+str(client_num+1))
     time.sleep(3)
     if server:
         p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
