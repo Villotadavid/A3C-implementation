@@ -100,8 +100,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 log_probs.append(log_prob)
                 rewards.append(reward)
 
-                with lock:
-                    counter.value += 1
+
 
                 if done:
                     break
@@ -109,12 +108,15 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
 
+                with lock:
+                    counter.value += 1
+                    csvopen = open(csvfile_name, 'a', newline='')
+                    csvfile = csv.writer(csvopen, delimiter=';')
+                    csvfile.writerows(log_data)
+
                 total_step += 1
 
             with lock:
-                csvopen = open(csvfile_name, 'a', newline='')
-                csvfile = csv.writer(csvopen, delimiter=';')
-                csvfile.writerows(log_data)
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
