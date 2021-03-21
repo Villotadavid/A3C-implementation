@@ -78,15 +78,11 @@ def Drone_Vision(png_image):
 
 def get_image(client):
     process = T.Compose([T.ToTensor()])
-    responses = client.simGetImages(
-        [airsim.ImageRequest("1", 3, pixels_as_float=True)])
+    responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,pixels_as_float=True)])
     response = responses[0]
-    img = airsim.list_to_2d_float_array(
-        response.image_data_float, response.width, response.height)
-    # print(np.max(img/255),np.max(img))
-    img = np.ascontiguousarray(img, dtype=np.float64) / 255
+    img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
+    #img = np.ascontiguousarray(img, dtype=np.float64) / 255
     img = cv2.resize(img, (128, 128))
-
     # np.array could be dispensable
 
     return img, process(img/np.max(img)).unsqueeze(0).to('cpu')

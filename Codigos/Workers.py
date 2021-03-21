@@ -116,7 +116,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 csvfile = csv.writer(csvopen, delimiter=';')
                 csvfile.writerows(log_data)
                 if num_ep % 10 == 0:
-                    torch.save(lnet.state_dict(),'Weights_' + str(num_ep + '.pt')
+                    torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
 
             loop_finish[id]=True

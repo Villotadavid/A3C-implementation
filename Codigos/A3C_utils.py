@@ -15,7 +15,7 @@ from collections import namedtuple
 import ImgProc as proc
 import ReinforceLearning as RL
 from Model_A3C import Net
-
+import psutil
 
 
 ################### REPLAY MEMORY ##################################
@@ -57,9 +57,6 @@ class memory():
 
 ################### CREATE EMVIRONMENTS ##################################
 
-
-
-
 def create_env(client_num):
     server=1
 
@@ -70,15 +67,15 @@ def create_env(client_num):
 
     sett_name='/settings'+str(client_num)+'.json'
     os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
-    print ('127.0.0.'+str(client_num+1))
+    print ('127.0.0.'+str(client_num+10))
     time.sleep(3)
     if server:
         p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
     else:
-        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/Forest.exe')
+        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/Forest.exe', stdout=subprocess.PIPE)
+
     time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
-
 
 
 def client_start(client):
@@ -89,8 +86,6 @@ def client_start(client):
     if landed == airsim.LandedState.Landed:
         client.takeoffAsync().join()
         time.sleep(2)
-
-
 
 
 ######################## CLIENT RESET ########################################
