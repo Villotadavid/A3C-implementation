@@ -80,10 +80,11 @@ def get_image(client):
     process = T.Compose([T.ToTensor()])
     responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,pixels_as_float=True)])
     response = responses[0]
-
+    w,h=response.width,response.height
     try:
         img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
     except:
+        print ('ALERTA')
         responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis, pixels_as_float=True)])
         response = responses[0]
         img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
@@ -92,7 +93,7 @@ def get_image(client):
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
 
-    return img, process(img/np.max(img)).unsqueeze(0).to('cpu')
+    return img, process(img/np.max(img)).unsqueeze(0).to('cpu'),w,h
 
 '''if __name__=='__main__':
     data_image()'''

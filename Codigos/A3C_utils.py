@@ -58,7 +58,7 @@ class memory():
 ################### CREATE EMVIRONMENTS ##################################
 
 def create_env(client_num):
-    server=1
+    server=0
 
     if server:
         sett_dir = 'C:/Users/davillot/Documents/AirSim'

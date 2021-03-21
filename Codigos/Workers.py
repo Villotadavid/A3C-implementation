@@ -62,7 +62,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             loop_finish[id] = False
             for t in range(MAX_EP_STEP):
                 # Observe new state
-                img, state = proc.get_image(client)
+                img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
                             data.kinematics_estimated.position.z_val]
@@ -94,25 +94,22 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
                 done = isDone(reward, collision_info, Remaining_Length)
 
-
-
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
-
-
 
                 if done:
                     break
 
                 memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),psutil.cpu_percent(),memoria])
+                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided) ,psutil.cpu_percent(),memoria,w,h])
 
                 with lock:
                     counter.value += 1
                     csvopen = open(csvfile_name, 'a', newline='')
                     csvfile = csv.writer(csvopen, delimiter=';')
-                    csvfile.writerows(log_data)
+                    #csvfile.writerows(log_data)
+                    csvfile.writerow([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),psutil.cpu_percent(),memoria,w,h])
 
                 total_step += 1
 

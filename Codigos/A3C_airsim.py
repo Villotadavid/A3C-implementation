@@ -45,7 +45,7 @@ parser.add_argument('--no-shared', default=False,
 
 if __name__ == "__main__":
 
-    num_workers=4
+    num_workers=1
     seed=1
     torch.manual_seed(seed)
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             csv_file='Training_data_'+str(name) + '.csv'
             csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
-            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','%CPU','%Memoria'])
+            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision','%CPU','%Memoria','Width','Height'])
             csvopen.close()
         name += 1
 
