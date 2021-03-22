@@ -57,8 +57,8 @@ class memory():
 
 ################### CREATE EMVIRONMENTS ##################################
 
-def create_env(client_num):
-    server=0
+def create_env(client_num,server):
+
 
     if server:
         sett_dir = 'C:/Users/davillot/Documents/AirSim'
@@ -79,7 +79,7 @@ def create_env(client_num):
 
 
 def client_start(client):
-    client.reset()
+    #client.reset()
     client.confirmConnection()
     client.enableApiControl(True)
     landed = client.getMultirotorState().landed_state

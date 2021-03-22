@@ -45,8 +45,14 @@ parser.add_argument('--no-shared', default=False,
 
 if __name__ == "__main__":
 
-    num_workers=1
+
+    server=1
     seed=1
+    if server:
+        num_workers = 4
+    else:
+        num_workers = 1
+
     torch.manual_seed(seed)
 
     args = parser.parse_args()
@@ -76,7 +82,7 @@ if __name__ == "__main__":
         name += 1
 
     for i in range (0,num_workers):
-        create_env(i)
+        create_env(i,server)
 
     for name in range(0, num_workers):
         p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish))

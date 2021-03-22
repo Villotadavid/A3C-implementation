@@ -25,8 +25,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         name='w%i' % id
         lnet = Net(1,5).double()           # local network
         #torch.manual_seed(args.seed + id)
-
-        client=airsim.MultirotorClient(ip='127.0.0.'+str(id+1))
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
 
         point = np.empty([3], dtype=np.float32)
@@ -38,6 +36,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
+            client = airsim.MultirotorClient(ip='127.0.0.' + str(id + 1))
             client_start(client)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
@@ -60,6 +59,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             #####################   STEPS  ############################
             log_data=[]
             loop_finish[id] = False
+
             for t in range(MAX_EP_STEP):
                 # Observe new state
                 img, state,w,h = proc.get_image(client)
