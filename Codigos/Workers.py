@@ -1,6 +1,5 @@
 
 import torch.optim as optim
-import time
 import ImgProc as proc
 import ReinforceLearning as RL
 from Model_A3C import Net
@@ -23,6 +22,7 @@ def ensure_shared_grads(model, shared_model):
 
 def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         name='w%i' % id
+        ip='127.0.0.' + str(id + 1)
         lnet = Net(1,5).double()           # local network
         #torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
@@ -36,8 +36,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
-            client = airsim.MultirotorClient(ip='127.0.0.' + str(id + 1))
-            client_start(client)
+
+            client=client_start(ip)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
             #Hay que hacer un reset al environment
@@ -54,8 +54,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             rewards = []
             entropies = []
 
-            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
-            time.sleep(2)
+            #client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
+            #time.sleep(2)
             #####################   STEPS  ############################
             log_data=[]
             loop_finish[id] = False
@@ -80,15 +80,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 action = prob.multinomial(num_samples=1).detach()  #detach-> no further tracking of operations. No more gradients
                 log_prob = log_prob.gather(1, action)
 
-                #quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
+                quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
 
-                quad_offset,angular=interpret_action(action)
+                quad_offset=interpret_action(action)
 
-                if not angular:
-                    client.moveByVelocityAsync( quad_offset[0],  quad_offset[1],quad_offset[2], 2)
-                else:
-                    client.rotateToYawAsync(quad_offset[2],3e+38,5)
-                    #client.moveByVelocityAsync(quad_vel.x_val,quad_vel.z_val,quad_vel.z_val, 2)
+                client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
+
 
                 reward, Remaining_Length = RL.Compute_reward(img, collision_info, point, position, 1)
 

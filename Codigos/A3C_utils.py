@@ -78,23 +78,26 @@ def create_env(client_num,server):
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
 
 
-def client_start(client):
-    #client.reset()
+def client_start(ip):
+    client = airsim.MultirotorClient(ip=ip)
+    client.reset()
     client.confirmConnection()
     client.enableApiControl(True)
     landed = client.getMultirotorState().landed_state
     if landed == airsim.LandedState.Landed:
         client.takeoffAsync().join()
         time.sleep(2)
-
+    return client
 
 ######################## CLIENT RESET ########################################
 
-def reset(self):
-        self.client.reset()
-        self.client = airsim.MultirotorClient()
-        self.client.confirmConnection()
-        self.client.enableApiControl(True)
+def reset(ip):
+
+        client = airsim.MultirotorClient(ip=ip)
+        client.reset()
+        client = airsim.MultirotorClient()
+        client.confirmConnection()
+        client.enableApiControl(True)
 
 
 ############################# IA PARAMETERS #############################
@@ -128,7 +131,7 @@ def weights_init(m):
 
 def isDone(reward,collision,L):
     done = 0
-    if  reward <= -10 or collision.has_collided==True or L>=40:
+    if reward <= -10 or collision.has_collided==True or L>=40:
         done = 1
     return done
 
@@ -136,25 +139,19 @@ def isDone(reward,collision,L):
 
 def interpret_action(action):
 
-    linear_scaling_factor = 0.65
-    angular_scaling_factor = 0.5
+    linear_scaling_factor = 4
     if action == 0:
-        angular=False
         quad_offset = (0, 0, +linear_scaling_factor)
     elif action == 1:
-        angular = False
         quad_offset = (0, 0, -linear_scaling_factor)
     elif action == 2:
-        angular = True
-        quad_offset = (0, 0, angular_scaling_factor)
+        quad_offset = (0, linear_scaling_factor, 0)
     elif action == 3:
-        angular = True
-        quad_offset = (0, 0, -angular_scaling_factor)
+        quad_offset = (0, -linear_scaling_factor, 0)
     elif action == 4:
-        angular = False
-        quad_offset = (+linear_scaling_factor*3, 0, 0)
+        quad_offset = (+linear_scaling_factor, 0, 0)
 
-    return quad_offset,angular
+    return quad_offset
 
 ############################# ACTIONS #############################
 

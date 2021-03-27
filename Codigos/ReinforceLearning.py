@@ -54,7 +54,11 @@ global prev_reward
 def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
     num=0
-    if collision_info.has_collided or position==prev_position:
+    resta=np.array(position)-np.array(prev_position)
+    dist=0.1
+    diff=np.array([dist,dist,dist])
+    print (resta)
+    if collision_info.has_collided or (abs(resta)<=diff).all():
         R=-10
         L= 999
     else:
