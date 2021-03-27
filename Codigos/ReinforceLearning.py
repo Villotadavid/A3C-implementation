@@ -51,6 +51,7 @@ def interpret_action(action):
 ################### COMPUTE REWARD ##################################
 
 global prev_reward
+
 def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
     num=0

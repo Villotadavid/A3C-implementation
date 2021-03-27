@@ -28,7 +28,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
 
         point = np.empty([3], dtype=np.float32)
-        point[0], point[1], point[2] = 30, 15, -20
+        point[0], point[1], point[2] = 60, 60, -40
 
         total_step = 1
         done=True
@@ -54,13 +54,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             rewards = []
             entropies = []
 
-            #client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
+            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0)).join()
             #time.sleep(2)
             #####################   STEPS  ############################
             log_data=[]
             loop_finish[id] = False
 
-            for t in range(MAX_EP_STEP):
+            '''for t in range(MAX_EP_STEP):
                 # Observe new state
                 img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
@@ -146,5 +146,5 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()
-            num_ep+=1
+            num_ep+=1'''
 
