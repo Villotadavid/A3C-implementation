@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    shared_model = Net(1,5).double()
+    shared_model = Net(1,6).double()
     shared_model.share_memory()
 
     counter = mp.Value('i', 0)

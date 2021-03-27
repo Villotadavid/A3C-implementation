@@ -131,7 +131,8 @@ def weights_init(m):
 
 def isDone(reward,collision,L):
     done = 0
-    if reward <= -10 or collision.has_collided==True or L>=40:
+    print (reward,collision.has_collided,L)
+    if reward <= -10 or collision.has_collided==True or L>=75:
         done = 1
     return done
 
@@ -150,6 +151,8 @@ def interpret_action(action):
         quad_offset = (0, -linear_scaling_factor, 0)
     elif action == 4:
         quad_offset = (+linear_scaling_factor, 0, 0)
+    elif action == 5:
+        quad_offset = (0, 0, 0)
 
     return quad_offset
 
