@@ -16,11 +16,13 @@ import ImgProc as proc
 import ReinforceLearning as RL
 from Model_A3C import Net
 import psutil
+import math
 
 
 ################### REPLAY MEMORY ##################################
 
 global position
+prev_position=[0,0,0]
 
 class memory():
     def __init__(self, capacity):
@@ -131,8 +133,7 @@ def weights_init(m):
 
 def isDone(reward,collision,L):
     done = 0
-    print (reward,collision.has_collided,L)
-    if reward <= -10 or collision.has_collided==True or L>=75:
+    if reward <= -10 or collision.has_collided==True:
         done = 1
     return done
 
@@ -156,9 +157,35 @@ def interpret_action(action):
 
     return quad_offset
 
-############################# ACTIONS #############################
+############################# Sync #############################
 
 def check_loop_finish(loop_finish):
     print (loop_finish)
     while not all( element for element in loop_finish):
         pass
+
+############################# Compute reward #############################
+
+
+def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
+    global prev_position
+    num=0
+    resta=np.array(position)-np.array(prev_position)
+    dist=0.1
+    diff=np.array([dist,dist,dist])
+    L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
+    
+    if collision_info.has_collided or position==prev_position or L>=80:
+        R=-10
+        L= 999
+    else:    
+        if L<=2:
+            R_l=50
+        else:
+            R_l=-0.5*L+40
+
+        R=R_l #+num*50 #+R_c
+        
+    prev_position=position
+    
+    return R,L

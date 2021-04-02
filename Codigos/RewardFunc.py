@@ -14,8 +14,8 @@ prev_reward=0
 def Compute_reward(collision_info ,col_prob ,L ):      #The position should be the output of the neural network
 
     global prev_reward
-    if collision_info:
-        R=-100
+    if collision_info or L>=80:
+        R=-10
         L= 999
     else:
 
@@ -26,16 +26,16 @@ def Compute_reward(collision_info ,col_prob ,L ):      #The position should be t
             R_l=50
         else:
             
-            R_l=-1*L+40
+            R_l=-0.5*L+40
             
-        R_cp=-10*col_prob/(128*128)
-        R=R_l+R_cp
+        #R_cp=-10*col_prob/(128*128)
+        R=R_l #+R_cp
      
     
-    if prev_reward>R:
+    '''if prev_reward>R:
         R=R-2
     else:
-        R=R+2
+        R=R+2'''
         
     prev_reward=R
     
@@ -48,7 +48,7 @@ if __name__=='__main__':
     collision_info=False
     col_prob=0
     L=np.linspace(0,2*math.pi,50)
-    sin=np.sin(L)*25+25
+    sin=np.sin(L)*45+45
     R=[]
     x=[]
     

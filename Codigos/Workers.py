@@ -1,7 +1,6 @@
 
 import torch.optim as optim
 import ImgProc as proc
-import ReinforceLearning as RL
 from Model_A3C import Net
 from A3C_utils import *
 import csv
@@ -88,7 +87,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
 
 
-                reward, Remaining_Length = RL.Compute_reward(img, collision_info, point, position, 1)
+                reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
 
