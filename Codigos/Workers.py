@@ -95,8 +95,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 log_probs.append(log_prob)
                 rewards.append(reward)
 
-                if done:
-                    break
 
                 memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided) ,psutil.cpu_percent(),memoria,w,h])
@@ -109,6 +107,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                     csvfile.writerow([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),psutil.cpu_percent(),memoria,w,h])
 
                 total_step += 1
+
+                if done:
+                    break
 
             with lock:
                 if num_ep % 10 == 0:
@@ -142,7 +143,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             optimizer.zero_grad()
 
             (policy_loss + args.value_loss_coef * value_loss).backward()
-            torch.nn.utils.clip_grad_norm_(lnet.parameters(), args.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 40 )
 
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()
