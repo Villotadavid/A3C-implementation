@@ -7,7 +7,7 @@ import csv
 import psutil
 
 MAX_EP = 100000
-MAX_EP_STEP = 200
+MAX_EP_TIME = 40
 UPDATE_GLOBAL_ITER=10
 #seed=1
 
@@ -29,7 +29,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 50, 50, -40
 
-        total_step = 1
+
         done=True
         num_ep=0
 
@@ -52,15 +52,17 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             log_probs = []
             rewards = []
             entropies = []
-
+            total_step = 1
             client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
-            time.sleep(2)
+            time.sleep(1)
 
             #####################   STEPS  ############################
             log_data=[]
             loop_finish[id] = False
-
-            for t in range(MAX_EP_STEP):
+            start_time=time.time()
+            ep_time=time.time()
+            t=0
+            while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
                 img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
@@ -97,17 +99,18 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
 
                 memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided) ,psutil.cpu_percent(),memoria,w,h])
+                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 with lock:
                     counter.value += 1
                     csvopen = open(csvfile_name, 'a', newline='')
                     csvfile = csv.writer(csvopen, delimiter=';')
                     #csvfile.writerows(log_data)
-                    csvfile.writerow([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),psutil.cpu_percent(),memoria,w,h])
+                    csvfile.writerow([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 total_step += 1
-
+                ep_time = time.time()
+                t=(ep_time - start_time)
                 if done:
                     break
 
@@ -143,7 +146,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             optimizer.zero_grad()
 
             (policy_loss + args.value_loss_coef * value_loss).backward()
-            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 40 )
+            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 30 )
 
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()

@@ -7,7 +7,7 @@ from Model_A3C import Net
 import time
 import csv
 import argparse
-
+import torch
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -26,7 +26,7 @@ parser.add_argument('--entropy-coef', type=float, default=0.01,
                     help='entropy term coefficient (default: 0.01)')
 parser.add_argument('--value-loss-coef', type=float, default=0.5,
                     help='value loss coefficient (default: 0.5)')
-parser.add_argument('--max-grad-norm', type=float, default=50,
+parser.add_argument('--max-grad-norm', type=float, default=30,
                     help='value loss coefficient (default: 50)')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
@@ -46,7 +46,7 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=1
+    server=0
     seed=1
     if server:
         num_workers = 4
@@ -59,6 +59,8 @@ if __name__ == "__main__":
 
     shared_model = Net(1,6).double()
     shared_model.share_memory()
+    if server:
+        shared_model=torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt')
 
     counter = mp.Value('i', 0)
     lock = mp.Lock()
@@ -77,7 +79,7 @@ if __name__ == "__main__":
             csv_file='Training_data_'+str(name) + '.csv'
             csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
-            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision','%CPU','%Memoria','Width','Height'])
+            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision'])
             csvopen.close()
         name += 1
 

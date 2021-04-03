@@ -88,7 +88,6 @@ def client_start(ip):
     landed = client.getMultirotorState().landed_state
     if landed == airsim.LandedState.Landed:
         client.takeoffAsync().join()
-        time.sleep(2)
     return client
 
 ######################## CLIENT RESET ########################################
@@ -133,7 +132,7 @@ def weights_init(m):
 
 def isDone(reward,collision,L):
     done = 0
-    if reward <= -10 or collision.has_collided==True:
+    if reward <= -10 or collision.has_collided==True or reward == 50:
         done = 1
     return done
 
