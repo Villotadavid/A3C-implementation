@@ -60,8 +60,8 @@ if __name__ == "__main__":
     shared_model = Net(1,6).double()
     shared_model.share_memory()
     if server:
-        shared_model=torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt')
-
+        shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt'))
+    shared_model.train()
     counter = mp.Value('i', 0)
     lock = mp.Lock()
     loop_finish=mp.Manager().list([False]*num_workers)
