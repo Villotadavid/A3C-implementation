@@ -98,7 +98,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 rewards.append(reward)
 
 
-                memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
+                #memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
                 log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 with lock:
@@ -106,7 +106,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                     csvopen = open(csvfile_name, 'a', newline='')
                     csvfile = csv.writer(csvopen, delimiter=';')
                     #csvfile.writerows(log_data)
-                    csvfile.writerow([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
+                    inf=str(total_step)+'-> '+str(t)
+                    csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 total_step += 1
                 ep_time = time.time()
@@ -119,8 +120,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
 
-            #loop_finish[id]=True
-            #check_loop_finish(loop_finish)
+            loop_finish[id]=True
+            check_loop_finish(loop_finish)
 
             R = torch.zeros(1, 1)
 
