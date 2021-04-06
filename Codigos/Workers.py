@@ -119,9 +119,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
-
-            loop_finish[id]=True
-            check_loop_finish(loop_finish)
+            if num_ep%5==0:
+                loop_finish[id]=True
+                check_loop_finish(loop_finish)
 
             R = torch.zeros(1, 1)
 
@@ -133,8 +133,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             policy_loss = 0
             value_loss = 0
             gae = torch.zeros(1, 1)
-            for i in reversed(range(len(rewards))):
+            if len (rewards)<=10:
+                maxim=len(rewards)
+            else:
+                maxim=10
+            for i in reversed(range(maxim)):
                 R = args.gamma * R + rewards[i]
+                print (R,rewards[i])
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
 
