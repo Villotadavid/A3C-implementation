@@ -13,7 +13,6 @@ import numpy as np
 from collections import namedtuple
 
 import ImgProc as proc
-import ReinforceLearning as RL
 from Model_A3C import Net
 import psutil
 import math

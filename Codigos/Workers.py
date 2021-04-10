@@ -7,7 +7,7 @@ import csv
 import psutil
 
 MAX_EP = 100000
-MAX_EP_TIME = 40
+MAX_EP_TIME = 30
 UPDATE_GLOBAL_ITER=10
 #seed=1
 
@@ -60,7 +60,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             log_data=[]
             loop_finish[id] = False
             start_time=time.time()
-            ep_time=time.time()
             t=0
             while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
@@ -119,9 +118,14 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
-            if num_ep%5==0:
-                loop_finish[id]=True
-                check_loop_finish(loop_finish)
+            ping = client.ping()
+            if not ping:
+                csvfile.writerow([name+' Not giving ping'])
+            print (name+' -> Ping: '+str(ping))
+
+            #if num_ep%5==0:
+            #    loop_finish[id]=True
+            #    check_loop_finish(loop_finish)
 
             R = torch.zeros(1, 1)
 
@@ -139,7 +143,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 maxim=10
             for i in reversed(range(maxim)):
                 R = args.gamma * R + rewards[i]
-                print (R,rewards[i])
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
 
