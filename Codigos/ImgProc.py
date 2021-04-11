@@ -86,7 +86,7 @@ def get_image(client):
     except:
         print ('ALERTA')
         ping = client.ping()
-        print (name+' -> Ping: '+str(ping))
+        print ('ERROR -> Ping: '+str(ping))
         responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis, pixels_as_float=True)])
         response = responses[0]
         img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
