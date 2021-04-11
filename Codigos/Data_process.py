@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 plt.style.use('ggplot')
 
-df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Codigos/A3C_830_Ep.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_3.csv',delimiter=';')
 
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 

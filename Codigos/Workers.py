@@ -98,7 +98,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
 
 
                 #memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-                log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
+                #log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 with lock:
                     counter.value += 1
@@ -118,10 +118,10 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
-            ping = client.ping()
-            if not ping:
-                csvfile.writerow([name+' Not giving ping'])
-            print (name+' -> Ping: '+str(ping))
+            #ping = client.ping()
+            #if not ping:
+            #    csvfile.writerow([name+' Not giving ping'])
+            #print (name+' -> Ping: '+str(ping))
 
             #if num_ep%5==0:
             #    loop_finish[id]=True
