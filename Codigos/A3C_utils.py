@@ -4,16 +4,13 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import torchvision.transforms as T
 
-from utils import v_wrap, set_init, push_and_pull, record
+
 import os
 import subprocess
 import time
 import airsim
 import numpy as np
-from collections import namedtuple
 
-import ImgProc as proc
-from Model_A3C import Net
 import psutil
 import math
 
@@ -71,13 +68,33 @@ def create_env(client_num,server):
     print ('127.0.0.'+str(client_num+1))
     time.sleep(3)
     if server:
-        p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat')
+        p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat', stdout=subprocess.PIPE)
     else:
         p = subprocess.Popen('C:/Users/usuario/Documents/Forest/run.bat', stdout=subprocess.PIPE)
+
 
     time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
 
+
+def get_PID(PIDs,n):
+    PID=0
+    for proc in psutil.process_iter():
+        try:
+            # Get process name & pid from process object.
+            processName = proc.name()
+
+
+            if (processName == 'Forest.exe' and proc.parent() != None):
+                    if any(proc.pid == x for x in PIDs):
+                        pass
+                    else:
+                        PID=proc.pid
+
+
+        except:
+            pass
+    return PID
 
 def client_start(ip):
     client = airsim.MultirotorClient(ip=ip)
@@ -95,10 +112,30 @@ def reset(ip):
 
         client = airsim.MultirotorClient(ip=ip)
         client.reset()
-        client = airsim.MultirotorClient()
         client.confirmConnection()
         client.enableApiControl(True)
 
+######################## CLIENT check ########################################
+
+def client_check(threads):
+
+    ip_list=[('127.0.0.' + str(id + 1)) for id in range(0,threads)]
+    clients=[airsim.MultirotorClient(ip=ip_list[n]) for n in range(0,threads)]    
+
+######################## CLIENT check ########################################
+
+def loop_check(start_time,l_bool,id,server,PID,MAX):
+    time_=0
+
+    while not l_bool:
+        pass
+
+    while (l_bool and time_<=MAX+20):
+        time_=time.time()-start_time
+
+    if l_bool and time_>=MAX+10:
+        subprocess.check_output("Taskkill /PID %d /F" % PID)
+        create_env(id,server)
 
 ############################# IA PARAMETERS #############################
 

@@ -5,10 +5,13 @@ from Model_A3C import Net
 from A3C_utils import *
 import csv
 import psutil
+from multiprocessing import Value
+from ctypes import c_bool
 
 MAX_EP = 100000
 MAX_EP_TIME = 30
 UPDATE_GLOBAL_ITER=10
+
 #seed=1
 
 def ensure_shared_grads(model, shared_model):
@@ -19,19 +22,20 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
+def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PID):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,6).double()           # local network
         #torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
+        l_bool = Value(c_bool, False)
 
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 50, 50, -40
 
-
         done=True
         num_ep=0
+
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
@@ -39,7 +43,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             client=client_start(ip)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
-            #Hay que hacer un reset al environment
 
             if done:
                 cx = torch.zeros(1, 256)
@@ -60,9 +63,11 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
             log_data=[]
             loop_finish[id] = False
             start_time=time.time()
+            mp.Process(target=loop_check, args=(start_time,l_bool,id,server,PID,MAX_EP_TIME)).start()
             t=0
             while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
+                l_bool=True
                 img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
@@ -114,18 +119,11 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish):
                 if done:
                     break
 
+            l_bool=False
+
             with lock:
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
-
-            #ping = client.ping()
-            #if not ping:
-            #    csvfile.writerow([name+' Not giving ping'])
-            #print (name+' -> Ping: '+str(ping))
-
-            #if num_ep%5==0:
-            #    loop_finish[id]=True
-            #    check_loop_finish(loop_finish)
 
             R = torch.zeros(1, 1)
 

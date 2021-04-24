@@ -46,12 +46,12 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=1
+    server=0
     seed=1
     if server:
         num_workers = 4
     else:
-        num_workers = 1
+        num_workers = 2
 
     torch.manual_seed(seed)
 
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     name=0
     File=True
     log=[]
+    PID=[None]*num_workers
     while File:
         File=os.path.exists('Training_data_'+str(name)+'.csv')
 
@@ -84,13 +85,14 @@ if __name__ == "__main__":
 
     for i in range (0,num_workers):
         create_env(i,server)
+        PID[i] = get_PID(PID, i)
 
+    #checker=client_check(num_workers)
     for name in range(0, num_workers):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish))
-        time.sleep(2)
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish,server,PID[name]))
         p.start()
         processes.append(p)
-    [p.join() for w in processes]
+    [p.join() for w in processes]'''
 
 
 
