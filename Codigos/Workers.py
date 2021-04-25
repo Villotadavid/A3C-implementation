@@ -7,6 +7,7 @@ import csv
 import psutil
 from multiprocessing import Value
 from ctypes import c_bool
+import threading
 
 MAX_EP = 100000
 MAX_EP_TIME = 30
@@ -63,7 +64,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
             log_data=[]
             loop_finish[id] = False
             start_time=time.time()
-            mp.Process(target=loop_check, args=(start_time,l_bool,id,server,PID,MAX_EP_TIME)).start()
+            #a=threading.Thread(target=loop_check, args=(start_time,l_bool,id,server,PID,MAX_EP_TIME,lock))
+            #a.start()
             t=0
             while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
@@ -158,4 +160,4 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()
             num_ep+=1
-
+            #a.join()

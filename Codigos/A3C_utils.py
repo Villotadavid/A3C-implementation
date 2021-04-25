@@ -75,6 +75,7 @@ def create_env(client_num,server):
 
     time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
+    time.sleep(2)
 
 
 def get_PID(PIDs,n):
@@ -90,8 +91,6 @@ def get_PID(PIDs,n):
                         pass
                     else:
                         PID=proc.pid
-
-
         except:
             pass
     return PID
@@ -124,19 +123,22 @@ def client_check(threads):
 
 ######################## CLIENT check ########################################
 
-def loop_check(start_time,l_bool,id,server,PID,MAX):
+def loop_check(start_time,l_bool,id,server,PID,MAX,lock):
     time_=0
 
     while not l_bool:
         pass
 
-    while (l_bool and time_<=MAX+20):
+    while (l_bool and time_<=MAX+180):
         time_=time.time()-start_time
 
-    if l_bool and time_>=MAX+10:
-        subprocess.check_output("Taskkill /PID %d /F" % PID)
-        create_env(id,server)
+    with lock:
+        if l_bool and time_>=MAX+180:
+            print ('Kill: '+str(PID))
+            subprocess.check_output("Taskkill /PID %d /F" % PID)
+            create_env(id,server)
 
+    return 0
 ############################# IA PARAMETERS #############################
 
 # Initializing and setting the variance of a tensor of weights
