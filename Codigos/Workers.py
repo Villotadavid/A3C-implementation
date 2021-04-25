@@ -27,13 +27,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,6).double()           # local network
-        #torch.manual_seed(args.seed + id)
+        torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
-        point = np.empty([3], dtype=np.float32)
-        point[0], point[1], point[2] = 50, 50, -40
+        lnet.train()
         done=True
         num_ep=0
-
+        point = np.empty([3], dtype=np.float32)
+        point[0], point[1], point[2] = 20, 20, -40
         client=first_start(ip)
         R = torch.zeros(1, 1)
 
@@ -55,6 +55,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             log_probs = []
             rewards = []
             entropies = []
+
             total_step = 1
             client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
             time.sleep(1)
@@ -62,8 +63,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             #####################   STEPS  ############################
 
             start_time=time.time()
-            #a=threading.Thread(target=loop_check, args=(start_time,l_bool,id,server,PID,MAX_EP_TIME,lock))
-            #a.start()
             t=0
             while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
@@ -73,9 +72,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
-                value,policy,(hx,cx) = lnet.forward( (state,torch.tensor([delta]),(hx ,cx)))
-
-                collision_info = client.simGetCollisionInfo()
+                value,policy,(hx,cx) = lnet((state,torch.tensor([delta]),(hx ,cx)))
 
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
@@ -85,6 +82,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 action = prob.multinomial(num_samples=1).detach()  #detach-> no further tracking of operations. No more gradients
                 log_prob = log_prob.gather(1, action)
 
+                collision_info = client.simGetCollisionInfo()
                 quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
 
                 quad_offset=interpret_action(action)
@@ -128,11 +126,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             policy_loss = 0
             value_loss = 0
             gae = torch.zeros(1, 1)
-            if len (rewards)<=20:
-                maxim=len(rewards)
+            maxim = len(rewards)
+            if maxim<=10:
+                inf=0
             else:
-                maxim=20
-            for i in reversed(range(maxim)):
+                inf=len(rewards)-10
+            for i in reversed(range(inf,maxim)):
+                print (i)
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
@@ -146,7 +146,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             optimizer.zero_grad()
 
             (policy_loss + args.value_loss_coef * value_loss).backward()
-            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 30 )
+            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()

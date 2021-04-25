@@ -46,10 +46,10 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=0
+    server=1
     seed=1
     if server:
-        num_workers = 3
+        num_workers = 1
     else:
         num_workers = 1
 
