@@ -46,12 +46,12 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=1
+    server=0
     seed=1
     if server:
-        num_workers = 4
+        num_workers = 3
     else:
-        num_workers = 2
+        num_workers = 1
 
     torch.manual_seed(seed)
 
@@ -64,7 +64,6 @@ if __name__ == "__main__":
     shared_model.train()
     counter = mp.Value('i', 0)
     lock = mp.Lock()
-    loop_finish=mp.Manager().list([False]*num_workers)
     processes = []
     name=0
     File=True
@@ -89,7 +88,7 @@ if __name__ == "__main__":
 
     #checker=client_check(num_workers)
     for name in range(0, num_workers):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,loop_finish,server,PID[name]))
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server,PID[name]))
         p.start()
         processes.append(p)
     [p.join() for w in processes]

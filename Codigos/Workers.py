@@ -23,25 +23,24 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PID):
+def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,6).double()           # local network
         #torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
-        l_bool = Value(c_bool, False)
-
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 50, 50, -40
-
         done=True
         num_ep=0
 
+        client=first_start(ip)
+        R = torch.zeros(1, 1)
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
 
-            client=client_start(ip)
+            client_start(client)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
 
@@ -61,15 +60,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
             time.sleep(1)
 
             #####################   STEPS  ############################
-            log_data=[]
-            loop_finish[id] = False
+
             start_time=time.time()
             #a=threading.Thread(target=loop_check, args=(start_time,l_bool,id,server,PID,MAX_EP_TIME,lock))
             #a.start()
             t=0
             while t <= MAX_EP_TIME or total_step <= 200:
                 # Observe new state
-                l_bool=True
                 img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
@@ -103,15 +100,10 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
                 log_probs.append(log_prob)
                 rewards.append(reward)
 
-
-                #memoria=psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-                #log_data.append([time.time(),name,num_ep,t,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
-
                 with lock:
                     counter.value += 1
                     csvopen = open(csvfile_name, 'a', newline='')
                     csvfile = csv.writer(csvopen, delimiter=';')
-                    #csvfile.writerows(log_data)
                     inf=str(total_step)+'-> '+str(t)
                     csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
@@ -121,13 +113,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
                 if done:
                     break
 
-            l_bool=False
 
             with lock:
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
-            R = torch.zeros(1, 1)
+
 
             if not done:
                 value, _, _ = lnet((state,torch.tensor([delta]), (hx, cx)))
@@ -137,10 +128,10 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,loop_finish,server,PI
             policy_loss = 0
             value_loss = 0
             gae = torch.zeros(1, 1)
-            if len (rewards)<=10:
+            if len (rewards)<=20:
                 maxim=len(rewards)
             else:
-                maxim=10
+                maxim=20
             for i in reversed(range(maxim)):
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]

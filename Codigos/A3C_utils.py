@@ -14,43 +14,8 @@ import numpy as np
 import psutil
 import math
 
-
-################### REPLAY MEMORY ##################################
-
 global position
 prev_position=[0,0,0]
-
-class memory():
-    def __init__(self, capacity):
-        self.capacity=15000
-        self.values=[]
-        self.log_probs=[]
-        self.entropies=[]
-
-    def push (self,value,log_prob,reward,entropy):
-
-        if len(a) < self.capacity:
-
-            self.values.append(None)
-            self.log_probs.append(None)
-            self.rewards.append(None)
-            self.entropies.append(None)
-
-            self.values[position] = value
-            self.log_probs[position] =log_prob
-            self.rewards[position] =reward
-            self.entropies[position] = entropy
-
-        else:
-            del values[0]
-            del log_probs[0]
-            del rewards[0]
-            del entropies[0]
-            self.values.append(value)
-            self.log_probs.append(log_prob)
-            self.rewards.append(reward)
-            self.entropies.append(entropy)
-
 
 
 ################### CREATE EMVIRONMENTS ##################################
@@ -71,7 +36,6 @@ def create_env(client_num,server):
         p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat', stdout=subprocess.PIPE)
     else:
         p = subprocess.Popen('C:/Users/usuario/Documents/Forest/run.bat', stdout=subprocess.PIPE)
-
 
     time.sleep(10)
     os.rename(sett_dir + '/settings.json', sett_dir + sett_name)
@@ -95,24 +59,19 @@ def get_PID(PIDs,n):
             pass
     return PID
 
-def client_start(ip):
+def first_start(ip):
+
     client = airsim.MultirotorClient(ip=ip)
-    client.reset()
     client.confirmConnection()
     client.enableApiControl(True)
-    landed = client.getMultirotorState().landed_state
-    if landed == airsim.LandedState.Landed:
-        client.takeoffAsync().join()
     return client
 
-######################## CLIENT RESET ########################################
+def client_start(client):
 
-def reset(ip):
+    client.reset()
+    client.enableApiControl(True)
+    client.takeoffAsync().join()
 
-        client = airsim.MultirotorClient(ip=ip)
-        client.reset()
-        client.confirmConnection()
-        client.enableApiControl(True)
 
 ######################## CLIENT check ########################################
 
