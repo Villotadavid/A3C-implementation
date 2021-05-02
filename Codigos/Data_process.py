@@ -6,22 +6,25 @@ from mpl_toolkits.mplot3d import Axes3D
 
 plt.style.use('ggplot')
 
-df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_8.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_3.csv',delimiter=';')
 
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
-Muestra_Ep=300
+Muestra_Ep=8000
 media=np.array([None]*Muestra_Ep)
 reward=np.array([None]*Muestra_Ep)
 logs=np.array([None]*Muestra_Ep)
 length=np.array([None]*Muestra_Ep)
-x=np.linspace(0,300,300)
+x=np.linspace(0,Muestra_Ep,Muestra_Ep)
 for i in range (0,Muestra_Ep):  
     media[i]=np.mean(df.Values[(df.Episodio==i)])
     reward[i]=np.mean(df.Rewards[(df.Episodio==i)])
     logs[i]=np.mean(df.log_prob[(df.Episodio==i)])
     length[i]=np.mean(df.Remaining_Length[(df.Episodio==i)])
+    if df.Rewards[i]>=48:
+        print (df.Rewards[i])
+        
     
 plt.plot(x,media,label='Values')
 plt.plot(x,reward,label='Reward')
@@ -29,6 +32,12 @@ plt.plot(x,logs,label='logs')
 plt.plot(x,length,label='R.Length')
 plt.legend(loc="upper left")
 plt.show()
+
+################## FIND SUCCESS ###############################
+
+
+
+
 
 ################## PLOT DEUN EPISODIO ###############################
 
@@ -44,7 +53,7 @@ reward=np.mean(df.Rewards[(df.Episodio==Muestra_Ep)])
 log_prob=np.mean(df.log_prob[(df.Episodio==Muestra_Ep)])
 
 #%% ################## PLOT DE UN HILO ###############################
-Episodio=320
+Episodio=8000
 
 step_num=max(df.Step[(df.Episodio==Episodio)])
 Val=df.Values[(df.Episodio==Episodio)&(df.Hilo=='w0')]

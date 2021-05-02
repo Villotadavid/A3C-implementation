@@ -48,10 +48,10 @@ class FollowTrajectory:
         print (self.device)
         self.memory= RL.ReplayMemory(5000)
         self.policy_net = Model.DQN().to(self.device)
-        self.policy_net.load_state_dict(torch.load('C:/Users/usuario/Desktop/Doctorado/Codigos/models/Weights_5460.pt'))
+        #self.policy_net.load_state_dict(torch.load('C:/Users/usuario/Desktop/Doctorado/Codigos/models/Weights_5460.pt'))
         self.target_net = Model.DQN().to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
-        self.target_net.eval()
+        self.target_net.train()
 
         self.optimizer=optim.RMSprop(self.policy_net.parameters())
 
@@ -86,7 +86,7 @@ class FollowTrajectory:
 
             
         for point in trajectory:
-                img,state=proc.get_image(self)
+                img,state,_,_=proc.get_image(self.client)
 
                 data=self.client.getMultirotorState()
 
@@ -94,7 +94,6 @@ class FollowTrajectory:
                 a=self.client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False,0))
 
                 position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
-                time.sleep(1.5)
                 quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
 
                 Remaining_Length=99
@@ -110,7 +109,7 @@ class FollowTrajectory:
 
                     #Observe new state
 
-                    img,next_state=proc.get_image(self)
+                    img,next_state,_,_=proc.get_image(self.client)
                     data=self.client.getMultirotorState()
                     position=[data.kinematics_estimated.position.x_val ,data.kinematics_estimated.position.y_val,data.kinematics_estimated.position.z_val]
                     done=RL.isDone(reward,collision_info,Remaining_Length)
@@ -179,8 +178,8 @@ def train_DQN(nwp,plot):
 
 Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
 TARGET_UPDATE = 10
-num_episodes=10000
-start_episode=5460
+num_episodes=20000
+start_episode=0
 
 if __name__ == "__main__":  
 

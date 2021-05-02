@@ -25,7 +25,7 @@ import ImgProc as proc
 
 def interpret_action(action):
 
-    scaling_factor = 0.25
+    scaling_factor = 0.75
     if action == 0:
         quad_offset = (0, -scaling_factor, -scaling_factor)
     elif action == 1:
@@ -60,7 +60,7 @@ def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position 
     diff=np.array([dist,dist,dist])
     if collision_info.has_collided or position==prev_position:
         R=-10
-        L= 999
+        L= 100
     else:
         R_c=66
         L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))

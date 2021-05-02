@@ -46,7 +46,7 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=1
+    server=0
     seed=1
     if server:
         num_workers = 1

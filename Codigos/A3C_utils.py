@@ -170,9 +170,9 @@ def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position 
     diff=np.array([dist,dist,dist])
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     
-    if collision_info.has_collided or position==prev_position or L>=80:
+    if collision_info.has_collided or position==prev_position or L>=35:
         R=-10
-        L= 999
+        L= 35
     else:    
         if L<=2:
             R_l=50

@@ -33,9 +33,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         done=True
         num_ep=0
         point = np.empty([3], dtype=np.float32)
-        point[0], point[1], point[2] = 20, 20, -40
+        point[0], point[1], point[2] = 20, 20, -20
         client=first_start(ip)
-        R = torch.zeros(1, 1)
+        
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
@@ -94,6 +94,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
                 done = isDone(reward, collision_info, Remaining_Length)
 
+                print (value.item() , reward, Remaining_Length)
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
@@ -121,18 +122,18 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             if not done:
                 value, _, _ = lnet((state,torch.tensor([delta]), (hx, cx)))
                 R = value.detach()
-
+                
+            R = torch.zeros(1, 1)
             values.append(R)
             policy_loss = 0
             value_loss = 0
             gae = torch.zeros(1, 1)
             maxim = len(rewards)
-            if maxim<=10:
+            if maxim<=20:
                 inf=0
             else:
-                inf=len(rewards)-10
-            for i in reversed(range(inf,maxim)):
-                print (i)
+                inf=len(rewards)-20
+            for i in reversed(range(inf,maxim-1)):
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
@@ -140,9 +141,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 # Generalized Advantage Estimation
                 delta_t = rewards[i] + args.gamma * values[i + 1] - values[i]
                 gae = gae * args.gamma * args.gae_lambda + delta_t
-
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
-
+                print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
             optimizer.zero_grad()
 
             (policy_loss + args.value_loss_coef * value_loss).backward()
