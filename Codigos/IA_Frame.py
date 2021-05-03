@@ -16,7 +16,6 @@ import ReinforceLearning as RL
 
 
 import torch
-from torchsummary import summary
 import torch.optim as optim
 
 import torchvision.transforms as T
