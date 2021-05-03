@@ -175,8 +175,11 @@ def train_DQN(nwp,plot):
             print ('Saving Model for :'+ str(i_episode)+'th episode')
         
 
-
-Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
+server=1
+if server ==1
+    Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/models'
+else:
+    Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
 TARGET_UPDATE = 10
 num_episodes=20000
 start_episode=0
