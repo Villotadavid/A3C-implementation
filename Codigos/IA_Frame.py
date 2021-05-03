@@ -176,7 +176,7 @@ def train_DQN(nwp,plot):
         
 
 server=1
-if server ==1
+if server == 1:
     Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/models'
 else:
     Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
