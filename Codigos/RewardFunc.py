@@ -15,18 +15,14 @@ def Compute_reward(collision_info ,col_prob ,L ):      #The position should be t
 
     global prev_reward
     if collision_info or L>=80:
-        R=-10
-        L= 999
+        R=-1
+    elif L>=40 and L<=80:
+        R=-L/40+1
     else:
-
-        #proc.data_image(action,Correct_action,img)          #Displays objective area
-        
-        #L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
-        if L<=2:
-            R_l=50
+        if L<=1:
+            R_l=1
         else:
-            
-            R_l=-0.5*L+40
+            R_l=0.5**(0.15*L)
             
         #R_cp=-10*col_prob/(128*128)
         R=R_l #+R_cp
@@ -60,6 +56,6 @@ if __name__=='__main__':
         n+=1
     
     fig,ax = plt.subplots()
-    ax.plot(x,sin)
+    #ax.plot(x,sin)
     ax.plot(x,R)
     plt.show()

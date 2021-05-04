@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    shared_model = Net(1,6).double()
+    shared_model = Net(1,7).double()
     shared_model.share_memory()
     #if server:
     #    shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt'))

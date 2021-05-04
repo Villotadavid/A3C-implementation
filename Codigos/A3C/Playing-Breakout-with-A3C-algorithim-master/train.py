@@ -41,6 +41,7 @@ def train(rank, params, shared_model, optimizer):
             log_prob = F.log_softmax(action_values) # generating a distribution of log probabilities of the Q-values according to the log softmax: log_prob(a) = log(prob(a))
             entropy = -(log_prob * prob).sum(1) # H(p) = - sum_x p(x).log(p(x))
             entropies.append(entropy) # storing the computed entropy
+
             action = prob.multinomial().data # selecting an action by taking a random draw from the prob distribution
             log_prob = log_prob.gather(1, Variable(action)) # getting the log prob associated to this selected action
             values.append(value) # storing the value V(S) of the state

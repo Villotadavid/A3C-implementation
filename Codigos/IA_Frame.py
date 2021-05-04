@@ -74,8 +74,7 @@ class FollowTrajectory:
             self.client.takeoffAsync().join()
             
             print ('Despegando...')
-            time.sleep(2)
-            self.client.moveToPositionAsync(0, 0, -10, 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
+            self.client.moveToPositionAsync(0, 0, -10, 2, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0)).join()
         if plot:
             droneline, =ax.plot3D([0], [0], [0],color='blue',alpha=0.5)
             
@@ -98,8 +97,10 @@ class FollowTrajectory:
                 Remaining_Length=99
 
                 while not done and Remaining_Length>=2:
+
                     delta=np.array(point-position,dtype='float32')
                     action,NN_output = RL.select_action(self,state,torch.tensor([delta]))
+                    print (action)
                     quad_offset=RL.interpret_action(action)
                     self.client.moveByVelocityAsync(quad_vel.x_val,quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
                     collision_info=self.client.simGetCollisionInfo()
@@ -174,7 +175,7 @@ def train_DQN(nwp,plot):
             print ('Saving Model for :'+ str(i_episode)+'th episode')
         
 
-server=1
+server=0
 if server == 1:
     Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/models'
 else:

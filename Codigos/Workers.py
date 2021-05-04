@@ -26,7 +26,7 @@ def ensure_shared_grads(model, shared_model):
 def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
-        lnet = Net(1,6).double()           # local network
+        lnet = Net(1,7).double()           # local network
         torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
@@ -93,8 +93,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
-
-                print (value.item() , reward, Remaining_Length)
+                print (done)
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
@@ -144,7 +143,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
                 print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
             optimizer.zero_grad()
-
+            print (policy_loss + args.value_loss_coef * value_loss)
             (policy_loss + args.value_loss_coef * value_loss).backward()
             torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 

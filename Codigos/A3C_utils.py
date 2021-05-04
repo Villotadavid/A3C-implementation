@@ -129,7 +129,7 @@ def weights_init(m):
 
 def isDone(reward,collision,L):
     done = 0
-    if reward <= -10 or collision.has_collided==True or reward == 50:
+    if reward <= -1 or collision.has_collided==True or reward == 1:
         done = 1
     return done
 
@@ -137,7 +137,7 @@ def isDone(reward,collision,L):
 
 def interpret_action(action):
 
-    linear_scaling_factor = 4
+    linear_scaling_factor = 0.75
     if action == 0:
         quad_offset = (0, 0, +linear_scaling_factor)
     elif action == 1:
@@ -149,6 +149,8 @@ def interpret_action(action):
     elif action == 4:
         quad_offset = (+linear_scaling_factor, 0, 0)
     elif action == 5:
+        quad_offset = (-linear_scaling_factor, 0, 0)
+    elif action == 6:
         quad_offset = (0, 0, 0)
 
     return quad_offset
@@ -170,17 +172,16 @@ def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position 
     diff=np.array([dist,dist,dist])
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     
-    if collision_info.has_collided or position==prev_position or L>=35:
-        R=-10
-        L= 35
-    else:    
-        if L<=2:
-            R_l=50
+    if collision_info.has_collided or position==prev_position or L>=80:
+        R=-1
+    elif L>=40 and L<=80:
+        R=-L/40+1
+    else:
+        if L<=1:
+            R=1
         else:
-            R_l=-0.5*L+40
-
-        R=R_l #+num*50 #+R_c
+            R=0.5**(0.15*L)
         
     prev_position=position
-    
+    print (collision_info,R,L)
     return R,L
