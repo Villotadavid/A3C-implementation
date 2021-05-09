@@ -64,16 +64,15 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
             start_time=time.time()
             t=0
-            while t <= MAX_EP_TIME and total_step <= 200:
+            while t <= MAX_EP_TIME and total_step <= 800:
+                print (t,total_step)
                 # Observe new state
-                print (total_step,t)
-                img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
-                value,policy,(hx,cx) = lnet((state,torch.tensor([delta]),(hx ,cx)))
+                value,policy,(hx,cx) = lnet((torch.tensor([delta]),(hx ,cx)))
 
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
@@ -91,7 +90,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
 
 
-                reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
+                reward, Remaining_Length = Compute_reward( collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
                 values.append(value)
@@ -119,7 +118,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
 
             if not done:
-                value, _, _ = lnet((state,torch.tensor([delta]), (hx, cx)))
+                value, _, _ = lnet((torch.tensor([delta]), (hx, cx)))
                 R = value.detach()
                 
             R = torch.zeros(1, 1)
