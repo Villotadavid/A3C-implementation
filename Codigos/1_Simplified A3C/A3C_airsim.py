@@ -49,7 +49,7 @@ if __name__ == "__main__":
     server=0
     seed=1
     if server:
-        num_workers = 1
+        num_workers = 0
     else:
         num_workers = 1
 
