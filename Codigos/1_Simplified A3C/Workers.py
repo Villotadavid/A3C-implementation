@@ -64,7 +64,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
             start_time=time.time()
             t=0
-            while t <= MAX_EP_TIME and total_step <= 800:
+            while t <= MAX_EP_TIME and total_step <= 1000:
                 # Observe new state
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
