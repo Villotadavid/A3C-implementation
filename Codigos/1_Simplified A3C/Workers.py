@@ -65,7 +65,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             start_time=time.time()
             t=0
             while t <= MAX_EP_TIME and total_step <= 800:
-                print (t,total_step)
                 # Observe new state
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
@@ -87,11 +86,11 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
                 quad_offset=interpret_action(action)
 
-                client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
+                client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 0.1).join()
 
 
                 reward, Remaining_Length = Compute_reward( collision_info, point, position, 1)
-
+                #print (reward)
                 done = isDone(reward, collision_info, Remaining_Length)
                 values.append(value)
                 log_probs.append(log_prob)
@@ -102,7 +101,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                     csvopen = open(csvfile_name, 'a', newline='')
                     csvfile = csv.writer(csvopen, delimiter=';')
                     inf=str(total_step)+'-> '+str(t)
-                    csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,2),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
+                    csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
 
                 total_step += 1
                 ep_time = time.time()
