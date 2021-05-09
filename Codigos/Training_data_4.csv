@@ -1,2 +1,0 @@
-Time;Hilo;Episodio;Step;Values;log_prob;Rewards;Remaining_Length;Point;Position;Action;Colision
-1620153876.9012375;w0;0;1-> 0;1.066329169136686;-1.9713701514372455;-1;31.44;[ 20.  20. -20.];[ 1.15  1.14 -3.34];4;False

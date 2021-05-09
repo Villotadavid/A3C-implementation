@@ -64,8 +64,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
             start_time=time.time()
             t=0
-            while t <= MAX_EP_TIME or total_step <= 200:
+            while t <= MAX_EP_TIME and total_step <= 200:
                 # Observe new state
+                print (total_step,t)
                 img, state,w,h = proc.get_image(client)
                 data = client.getMultirotorState()
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
@@ -93,7 +94,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
-                print (done)
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
@@ -141,9 +141,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 delta_t = rewards[i] + args.gamma * values[i + 1] - values[i]
                 gae = gae * args.gamma * args.gae_lambda + delta_t
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
-                print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
+                #print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
             optimizer.zero_grad()
-            print (policy_loss + args.value_loss_coef * value_loss)
+            #print (policy_loss + args.value_loss_coef * value_loss)
             (policy_loss + args.value_loss_coef * value_loss).backward()
             torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 

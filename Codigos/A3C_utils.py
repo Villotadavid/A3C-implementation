@@ -183,5 +183,4 @@ def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position 
             R=0.5**(0.15*L)
         
     prev_position=position
-    print (collision_info,R,L)
     return R,L
