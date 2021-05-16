@@ -16,6 +16,10 @@ GAMMA = 0.9
 MAX_EP = 3000
 
 parser = argparse.ArgumentParser(description='A3C')
+parser.add_argument('--server', type=bool, default=0,
+                    help='if running in server->1 if not->0')
+parser.add_argument('--points', type=int, default=1,
+                    help='if running in server->1 if not->0')
 parser.add_argument('--lr', type=float, default=0.0001,
                     help='learning rate (default: 0.0001)')
 parser.add_argument('--gamma', type=float, default=0.99,
@@ -46,21 +50,24 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=1
+
     seed=1
-    if server:
-        num_workers = 0
-    else:
-        num_workers = 1
+
 
     torch.manual_seed(seed)
 
     args = parser.parse_args()
-
+    server=args.server
     shared_model = Net(1,7).double()
     shared_model.share_memory()
+
+    if server:
+        num_workers = 1
+    else:
+        num_workers = 1
     #if server:
     #    shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt'))
+
     shared_model.train()
     counter = mp.Value('i', 0)
     lock = mp.Lock()

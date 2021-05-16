@@ -127,9 +127,9 @@ def weights_init(m):
 
 ############################# DONE #############################
 
-def isDone(reward,collision,L):
+def isDone(reward,collision,num):
     done = 0
-    if reward <= -1 or collision.has_collided==True or reward == 1:
+    if reward <= -1 or collision.has_collided==True or reward==num:
         done = 1
     return done
 
@@ -166,21 +166,19 @@ def check_loop_finish(loop_finish):
 
 def Compute_reward(collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
-    num=0
     resta=np.array(position)-np.array(prev_position)
     dist=0.1
     diff=np.array([dist,dist,dist])
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     
-    if collision_info.has_collided or position==prev_position or L>=80:
+    if collision_info.has_collided or position==prev_position or L>=60:
         R=-1
-    elif L>=40 and L<=80:
-        R=-L/40+1
+        achieved = 0
+    elif L<=1:
+        R=1*num
+        achieved=1
     else:
-        if L<=1:
-            R=1
-        else:
-            R=0.5**(0.15*L)
-        
+        achieved=0
+        R=0.5**(0.15*L)+num-1
     prev_position=position
-    return R,L
+    return R,L,achieved
