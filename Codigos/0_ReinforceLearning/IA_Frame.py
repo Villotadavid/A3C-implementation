@@ -47,7 +47,7 @@ class FollowTrajectory:
         print (self.device)
         self.memory= RL.ReplayMemory(5000)
         self.policy_net = Model.DQN().to(self.device)
-        #self.policy_net.load_state_dict(torch.load('C:/Users/usuario/Desktop/Doctorado/Codigos/models/Weights_5460.pt'))
+        #self.policy_net.load_state_dict(torch.load('C:/Users/usuario/Desktop/Doctorado/Codigos/0_ReinforceLearning/Weights_5460.pt'))
         self.target_net = Model.DQN().to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.train()
@@ -100,13 +100,12 @@ class FollowTrajectory:
 
                     delta=np.array(point-position,dtype='float32')
                     action,NN_output = RL.select_action(self,state,torch.tensor([delta]))
-                    print (action)
                     quad_offset=RL.interpret_action(action)
                     self.client.moveByVelocityAsync(quad_vel.x_val,quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
                     collision_info=self.client.simGetCollisionInfo()
-                    reward,Remaining_Length=RL.Compute_reward(img,collision_info,point,position,num)
+                    reward,Remaining_Length=RL.Compute_reward(collision_info,point,position,num)
                     quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
-
+                    print (reward)
                     #Observe new state
 
                     img,next_state,_,_=proc.get_image(self.client)
@@ -177,9 +176,9 @@ def train_DQN(nwp,plot):
 
 server=0
 if server == 1:
-    Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/models'
+    Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/0_ReinforceLearning'
 else:
-    Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/models/'
+    Model_PATH='C:/Users/usuario/Desktop/Doctorado/Codigos/0_ReinforceLearning'
 TARGET_UPDATE = 10
 num_episodes=20000
 start_episode=0

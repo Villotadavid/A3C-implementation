@@ -52,25 +52,24 @@ def interpret_action(action):
 
 global prev_reward
 
-def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
+def Compute_reward(collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
     global prev_position
-    num=0
-    resta=np.array(position)-np.array(prev_position)
-    dist=0.1
-    diff=np.array([dist,dist,dist])
-    if collision_info.has_collided or position==prev_position:
-        R=-10
-        L= 100
-    else:
-        R_c=66
-        L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
-        if L<=2:
-            R_l=50
-        else:
-            R_l=-1*L+70
+    resta = np.array(position) - np.array(prev_position)
+    dist = 0.1
+    diff = np.array([dist, dist, dist])
+    L = math.sqrt((wp2[0] - position[0]) * (wp2[0] - position[0]) + (wp2[1] - position[1]) * (wp2[1] - position[1]) + (
+                wp2[2] - position[2]) * (wp2[2] - position[2]))
 
-        R=R_l+num*50 #+R_c
-    prev_position=position
+    if collision_info.has_collided or position == prev_position or L >= 60:
+        R = -1
+        achieved = 0
+    elif L <= 1:
+        R = 1 * num
+        achieved = 1
+    else:
+        achieved = 0
+        R = 0.5 ** (0.15 * L) + num - 1
+    prev_position = position
     return R,L
 
 

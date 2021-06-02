@@ -1,6 +1,6 @@
 library(ggplot2)
 library(dplyr)
-dfx=read.csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1_L.csv',sep=';')
+dfx=read.csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_2.csv',sep=';')
 
 ##############################################################
 

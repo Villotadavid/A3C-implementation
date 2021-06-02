@@ -12,7 +12,7 @@ df3=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_7
 df4=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_1_A3C1.csv',delimiter=';')
 add=[df1,df2,df3,df4]
 df=pandas.concat(add)'''
-df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1_L.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1.csv',delimiter=';')
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
@@ -33,10 +33,15 @@ Success=df.Episodio[(df.Rewards==1)]
 print (Success)
         
     
-#plt.plot(x,media,label='Values')
-#plt.plot(x,reward,label='Reward')
-#plt.plot(x,logs,label='logs')
 plt.plot(x,length,label='R.Length')
+plt.legend(loc="upper left")
+plt.show()
+
+plt.plot(x,media,label='Values')
+plt.legend(loc="upper left")
+plt.show()
+
+plt.plot(x,reward,label='Reward')
 plt.legend(loc="upper left")
 plt.show()
 
@@ -62,7 +67,7 @@ plt.show()
 
 step_num=max(df.Step[(df.Episodio==Muestra_Ep)])
 Actions=df.Action[(df.Episodio==Muestra_Ep)&(df.Hilo=='w0')]
-plt.hist(Actions,bins=[0,1,2,3,4,5,6],edgecolor='k'.label='Actions')
+plt.hist(Actions,bins=[0,1,2,3,4,5,6],edgecolor='k',label='Actions')
 plt.legend(loc="upper left")
 plt.show()
 
