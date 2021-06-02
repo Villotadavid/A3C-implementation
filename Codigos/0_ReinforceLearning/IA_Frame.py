@@ -105,7 +105,6 @@ class FollowTrajectory:
                     collision_info=self.client.simGetCollisionInfo()
                     reward,Remaining_Length=RL.Compute_reward(collision_info,point,position,num)
                     quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
-                    print (reward)
                     #Observe new state
 
                     img,next_state,_,_=proc.get_image(self.client)
@@ -123,7 +122,7 @@ class FollowTrajectory:
                     
                     loss,V_Funct,Q_funct,Belleman=RL.optimize_model(self)
 
-                    csvfile.writerow([INDEX,i_episode,action.item(),round(reward,2),round(Remaining_Length,2),round(loss,2),NN_output,point,np.around(position,decimals=2)])
+                    csvfile.writerow([INDEX,i_episode,action.item(),round(reward,2),round(Remaining_Length,2),round(loss,2),point,np.around(position,decimals=2)])
                     if done:
                         #self.episode_durations.append(t+1)
                         print ('Finalizando episodio')
@@ -143,7 +142,7 @@ def train_DQN(nwp,plot):
 
     csvopen=open('Training_data.csv','w',newline='')
     csvfile=csv.writer(csvopen)
-    csvfile.writerow(['Index','Episode','Action', 'Reward', 'Remaining length' , 'Loss','NN Output' ,'Punto objetivo','Posición actual'])
+    csvfile.writerow(['Index','Episode','Action', 'Reward', 'Remaining length' , 'Loss','Punto objetivo','Posición actual'])
     nav = FollowTrajectory()
     
     for i_episode in range(start_episode,start_episode+num_episodes):
@@ -174,7 +173,7 @@ def train_DQN(nwp,plot):
             print ('Saving Model for :'+ str(i_episode)+'th episode')
         
 
-server=0
+server=1
 if server == 1:
     Model_PATH='C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/0_ReinforceLearning'
 else:
