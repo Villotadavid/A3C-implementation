@@ -33,8 +33,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
         lnet.train()
         done=True
         num_ep=ep_start
-        point = np.empty([3], dtype=np.float32)
-        point[0], point[1], point[2] = 20, 20, -20
+        trajectory=Trajectory_Generation(args.points,20,-20)
         client=first_start(ip)
         
 
@@ -58,16 +57,16 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
             entropies = []
 
             contador=0
-
-            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
-            time.sleep(1)
+            for point in trajectory:
+                client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
+                time.sleep(1)
 
                 #####################   STEPS  ############################
-            contador+=1
-            total_step = 1
-            start_time=time.time()
-            t=0
-            while t <= MAX_EP_TIME: #and total_step <= 2000
+                contador+=1
+                total_step = 1
+                start_time=time.time()
+                t=0
+                while t <= MAX_EP_TIME: #and total_step <= 2000
                     # Observe new state
                     data = client.getMultirotorState()
                     position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
@@ -93,8 +92,10 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
 
                     reward, Remaining_Length,achieved = Compute_reward( collision_info, point, position, contador)
-
-                    done = isDone(reward, collision_info,len(trajectory))
+                    ep_time = time.time()
+                    t=(ep_time - start_time)
+                    print (t)
+                    done = isDone(reward, collision_info,len(trajectory),t)
                     values.append(value)
                     log_probs.append(log_prob)
                     rewards.append(reward)
@@ -106,11 +107,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                         csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),achieved,done])
                         #print ([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),achieved,done])
                     total_step += 1
-                    ep_time = time.time()
-                    t=(ep_time - start_time)
-                    if done :
-                        break
 
+                    if done or achieved:
+                        break
+                if done:
+                    break
+            if done:
+                break
 
             with lock:
                 if num_ep % 10 == 0:
