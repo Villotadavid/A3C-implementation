@@ -175,7 +175,6 @@ def guess_stuck (position):
 
     if prev_position_1==prev_position_3:
         stuck=1
-        print(prev_position_3, prev_position_1)
     else:
         stuck=0
 

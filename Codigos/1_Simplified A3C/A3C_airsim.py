@@ -22,7 +22,7 @@ parser.add_argument('--start', type=int, default=0,
                     help='define start episode number')
 parser.add_argument('--workers', type=int, default=1,
                     help='define number of threads')
-parser.add_argument('--points', type=int, default=1,
+parser.add_argument('--points', type=int, default=0,
                     help='if running in server->1 if not->0')
 parser.add_argument('--lr', type=float, default=0.0001,
                     help='learning rate (default: 0.0001)')
