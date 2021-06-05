@@ -6,17 +6,15 @@ from mpl_toolkits.mplot3d import Axes3D
 
 plt.style.use('ggplot')
 
-'''df1=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1.csv',delimiter=';')
-df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_2_A3C1.csv',delimiter=';')
-df3=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_7_A3C1.csv',delimiter=';')
-df4=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_1_A3C1.csv',delimiter=';')
-add=[df1,df2,df3,df4]
-df=pandas.concat(add)'''
-df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1.csv',delimiter=';')
+df1=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Training_data_0-340.csv',delimiter=';')
+df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Training_data_340-3420.csv',delimiter=';')
+add=[df1,df2]
+df=pandas.concat(add)
+'''df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Training_data_0_A3C1.csv',delimiter=';')
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
-
+'''
 ################## MEDIAS POR EPISODIO ###############################
-total=df.iloc[-1].Episodio
+total=int(df.iloc[-1].Episodio)
 Muestra_Ep=total
 media=np.array([None]*Muestra_Ep)
 reward=np.array([None]*Muestra_Ep)

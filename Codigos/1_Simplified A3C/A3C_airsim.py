@@ -18,6 +18,8 @@ MAX_EP = 3000
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--server', type=bool, default=0,
                     help='if running in server->1 if not->0')
+parser.add_argument('--start', type=int, default=0,
+                    help='define start episode number')
 parser.add_argument('--points', type=int, default=1,
                     help='if running in server->1 if not->0')
 parser.add_argument('--lr', type=float, default=0.0001,
@@ -58,6 +60,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     server=args.server
+    ep_start = args.ep_start
     shared_model = Net(1,7).double()
     shared_model.share_memory()
 
@@ -95,7 +98,7 @@ if __name__ == "__main__":
 
     #checker=client_check(num_workers)
     for name in range(0, num_workers):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server,PID[name]))
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,ep_start))
         p.start()
         processes.append(p)
     [p.join() for w in processes]

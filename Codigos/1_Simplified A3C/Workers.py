@@ -24,7 +24,7 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
+def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,7).double()           # local network
@@ -32,7 +32,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
         done=True
-        num_ep=531
+        num_ep=ep_start
         trajectory=Trajectory_Generation(args.points,20,-20)
         client=first_start(ip)
         
@@ -143,11 +143,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
 
             optimizer.zero_grad()
-            print (policy_loss + args.value_loss_coef * value_loss)
-            (policy_loss + args.value_loss_coef * value_loss).backward()
-            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
+            if (policy_loss + args.value_loss_coef * value_loss)==0.0:
+                pass
+            else:
+                (policy_loss + args.value_loss_coef * value_loss).backward()
+                torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 
-            ensure_shared_grads(lnet, shared_model)
-            optimizer.step()
-            num_ep+=1
-            #a.join()
+                ensure_shared_grads(lnet, shared_model)
+                optimizer.step()
+                num_ep+=1
+                #a.join()
