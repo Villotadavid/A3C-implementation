@@ -62,11 +62,11 @@ if __name__ == "__main__":
     shared_model.share_memory()
 
     if server:
-        num_workers = 1
+        num_workers = 2
     else:
         num_workers = 1
-    #if server:
-    #    shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt'))
+    if server:
+        shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/1_Simplified A3C/Weights_530.pt'))
 
     shared_model.train()
     counter = mp.Value('i', 0)

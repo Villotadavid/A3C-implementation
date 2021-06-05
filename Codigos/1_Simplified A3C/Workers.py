@@ -32,7 +32,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
         done=True
-        num_ep=0
+        num_ep=531
         trajectory=Trajectory_Generation(args.points,20,-20)
         client=first_start(ip)
         
@@ -97,7 +97,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                     values.append(value)
                     log_probs.append(log_prob)
                     rewards.append(reward)
-                    print (total_step,t,reward,achieved,collision_info.has_collided,delta)
                     with lock:
                         counter.value += 1
                         csvopen = open(csvfile_name, 'a', newline='')
@@ -144,6 +143,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
 
             optimizer.zero_grad()
+            print (policy_loss + args.value_loss_coef * value_loss)
             (policy_loss + args.value_loss_coef * value_loss).backward()
             torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 
