@@ -15,8 +15,9 @@ import psutil
 import math
 
 global position
-prev_position=[0,0,0]
-
+prev_position_1=[0,0,0]
+prev_position_2=[0,0,0]
+prev_position_3=[0,0,0]
 
 ################### CREATE EMVIRONMENTS ##################################
 
@@ -163,15 +164,31 @@ def check_loop_finish(loop_finish):
 
 ############################# Compute reward #############################
 
+def guess_stuck (position):
+    global prev_position_1
+    global prev_position_2
+    global prev_position_3
+
+    prev_position_3 = prev_position_2
+    prev_position_2 = prev_position_1
+    prev_position_1=position
+
+    if prev_position_1==prev_position_3:
+        stuck=1
+        print(prev_position_3, prev_position_1)
+    else:
+        stuck=0
+
+    return stuck
+
+
 
 def Compute_reward(collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
-    global prev_position
-    resta=np.array(position)-np.array(prev_position)
-    dist=0.1
-    diff=np.array([dist,dist,dist])
+
+
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
-    
-    if collision_info.has_collided or position==prev_position or L>=60:
+    stuck=guess_stuck (position)
+    if collision_info.has_collided or stuck or L>=60:
         R=-1
         achieved = 0
     elif L<=1:
@@ -180,5 +197,4 @@ def Compute_reward(collision_info ,wp2 ,position,num ):      #The position shoul
     else:
         achieved=0
         R=0.5**(0.15*L)+num-1
-    prev_position=position
     return R,L,achieved

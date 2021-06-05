@@ -40,6 +40,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
             trajectory = Trajectory_Generation(args.points, 20, -20)
+            print (trajectory)
+            print ('---')
             client_start(client)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
@@ -58,7 +60,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
             contador=0
             for point in trajectory:
-
+                print (point)
                 client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
                 time.sleep(1)
 
@@ -108,6 +110,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                     ep_time = time.time()
                     t=(ep_time - start_time)
                     if done or achieved:
+                        print (done,achieved)
                         break
                 if done:
                     break

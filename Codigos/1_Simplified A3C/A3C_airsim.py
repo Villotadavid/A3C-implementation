@@ -20,6 +20,8 @@ parser.add_argument('--server', type=bool, default=0,
                     help='if running in server->1 if not->0')
 parser.add_argument('--start', type=int, default=0,
                     help='define start episode number')
+parser.add_argument('--workers', type=int, default=1,
+                    help='define number of threads')
 parser.add_argument('--points', type=int, default=1,
                     help='if running in server->1 if not->0')
 parser.add_argument('--lr', type=float, default=0.0001,
@@ -64,9 +66,9 @@ if __name__ == "__main__":
 
     server=args.server
     ep_start = args.start
-
+    num_workers=args.workers
     if server:
-        num_workers = 2
+        num_workers = num_workers
     else:
         num_workers = 1
     if server:
