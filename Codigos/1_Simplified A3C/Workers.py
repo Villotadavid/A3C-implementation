@@ -89,7 +89,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
                     quad_offset=interpret_action(action)
 
-                    #client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 0.1).join()
+                    client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 0.1).join()
 
 
                     reward, Remaining_Length,achieved = Compute_reward( collision_info, point, position, contador)
