@@ -58,7 +58,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
             contador=0
             for point in trajectory:
-                print (name,point)
                 client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
                 time.sleep(1)
 
@@ -108,7 +107,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                     ep_time = time.time()
                     t=(ep_time - start_time)
                     if done or achieved:
-                        print (done,achieved)
                         break
                 if done:
                     break
