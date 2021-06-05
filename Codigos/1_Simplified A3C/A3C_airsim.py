@@ -59,10 +59,11 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
 
     args = parser.parse_args()
-    server=args.server
-    ep_start = args.ep_start
     shared_model = Net(1,7).double()
     shared_model.share_memory()
+
+    server=args.server
+    ep_start = args.start
 
     if server:
         num_workers = 2
