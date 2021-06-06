@@ -71,8 +71,8 @@ if __name__ == "__main__":
         num_workers = num_workers
     else:
         num_workers = 1
-    if server:
-        shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/1_Simplified A3C/Weights_530.pt'))
+    #if server:
+    #    shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/1_Simplified A3C/Weights_530.pt'))
 
     shared_model.train()
     counter = mp.Value('i', 0)
