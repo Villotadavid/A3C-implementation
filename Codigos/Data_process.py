@@ -10,12 +10,12 @@ plt.style.use('ggplot')
 df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Training_data_340-3420.csv',delimiter=';')
 add=[df1,df2]
 df=pandas.concat(add)'''
-df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Training_data_0.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/3_threads/Training_data_2.csv',delimiter=';')
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
 total=int(df.iloc[-1].Episodio)
-Muestra_Ep=150
+Muestra_Ep=total
 media=np.array([None]*Muestra_Ep)
 reward=np.array([None]*Muestra_Ep)
 logs=np.array([None]*Muestra_Ep)
@@ -45,12 +45,13 @@ plt.show()
 
 
 #%% ################## PLOT DE UN HILO ###############################
-Muestra_Ep=915
+Muestra_Ep=292
+Hilo='w0'
 step_num=max(df.Step[(df.Episodio==Muestra_Ep)])
-Val=df.Values[(df.Episodio==Muestra_Ep)&(df.Hilo=='w0')]
-re=df.Rewards[(df.Episodio==Muestra_Ep)&(df.Hilo=='w0')]
-lo=df.log_prob[(df.Episodio==Muestra_Ep)&(df.Hilo=='w0')]
-rem=df.Remaining_Length[(df.Episodio==Muestra_Ep)&(df.Hilo=='w0')]
+Val=df.Values[(df.Episodio==Muestra_Ep)&(df.Hilo==Hilo)]
+re=df.Rewards[(df.Episodio==Muestra_Ep)&(df.Hilo==Hilo)]
+lo=df.log_prob[(df.Episodio==Muestra_Ep)&(df.Hilo==Hilo)]
+rem=df.Remaining_Length[(df.Episodio==Muestra_Ep)&(df.Hilo==Hilo)]
 plt.plot(np.linspace(0,len(Val),len(Val)),Val,label='Value')
 #plt.plot(np.linspace(0,len(Val),len(Val)),lo,label='log probability')
 plt.plot(np.linspace(0,len(Val),len(Val)),rem,label='Remining Length')

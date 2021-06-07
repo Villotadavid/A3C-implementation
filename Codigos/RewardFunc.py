@@ -23,9 +23,9 @@ def Compute_reward(collision_info ,col_prob ,L ):      #The position should be t
             R_l=1
         else:
             R_l=0.5**(0.15*L)
-            
-        #R_cp=-10*col_prob/(128*128)
-        R=R_l #+R_cp
+            #R_l=0.5**(0.15*L)
+            print (L, R_l)
+        R=R_l
      
     
     '''if prev_reward>R:
@@ -52,10 +52,10 @@ if __name__=='__main__':
     
     for t in sin:
         R.append(Compute_reward( collision_info, col_prob, t))
-        x.append(n/2)
+        x.append(n)
         n+=1
     
-    fig,ax = plt.subplots()
-    #ax.plot(x,sin)
-    ax.plot(x,R)
+    fig,(ax1,ax2) = plt.subplots(1,2)
+    ax1.plot(x,sin)
+    ax2.plot(x,R)
     plt.show()

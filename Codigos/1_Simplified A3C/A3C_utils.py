@@ -188,12 +188,14 @@ def Compute_reward(collision_info ,wp2 ,position,num ):      #The position shoul
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     stuck=guess_stuck (position)
     if collision_info.has_collided or stuck or L>=60:
-        R=-1
-        achieved = 0
-    elif L<=1:
-        R=1*num
-        achieved=1
+        R = -1
+    elif L >= 40 and L <= 80:
+        R = -L / 40 + 1
     else:
-        achieved=0
-        R=0.5**(0.15*L)+num-1
+        if L <= 1:
+            R_l = 1
+        else:
+            R_l = 0.5 ** (0.15 * L)
+
+        R = R_l
     return R,L,achieved
