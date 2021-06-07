@@ -198,4 +198,4 @@ def Compute_reward(collision_info ,wp2 ,position,num ):      #The position shoul
             R_l = 0.5 ** (0.15 * L)
 
         R = R_l
-    return R,L,achieved
+    return R,L

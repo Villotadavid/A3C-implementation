@@ -16,7 +16,8 @@ GAMMA = 0.9
 MAX_EP = 3000
 
 parser = argparse.ArgumentParser(description='A3C')
-parser.add_argument('--server', type=bool, default=0,
+
+parser.add_argument('--server', type=int, default=0,
                     help='if running in server->1 if not->0')
 parser.add_argument('--start', type=int, default=0,
                     help='define start episode number')
@@ -64,9 +65,11 @@ if __name__ == "__main__":
     shared_model = Net(1,7).double()
     shared_model.share_memory()
 
-    server=args.server
+    server=bool(args.server)
+
     ep_start = args.start
     num_workers=args.workers
+	
     if server:
         num_workers = num_workers
     else:
@@ -91,7 +94,7 @@ if __name__ == "__main__":
             csv_file='Training_data_'+str(name) + '.csv'
             csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
-            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision','achieved','done'])
+            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision'])
             csvopen.close()
         name += 1
 

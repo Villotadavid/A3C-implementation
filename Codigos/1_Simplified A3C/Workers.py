@@ -92,7 +92,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                     client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 0.1).join()
 
 
-                    reward, Remaining_Length,achieved = Compute_reward( collision_info, point, position, contador)
+                    reward, Remaining_Length = Compute_reward( collision_info, point, position, contador)
 
                     done = isDone(reward, collision_info,len(trajectory))
                     values.append(value)
@@ -103,8 +103,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                         csvopen = open(csvfile_name, 'a', newline='')
                         csvfile = csv.writer(csvopen, delimiter=';')
                         inf=str(total_step)+'-> '+str(t)
-                        csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),achieved,done])
-                        #print ([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided),achieved,done])
+                        csvfile.writerow([time.time(),name,num_ep,inf,value.item(),log_prob.item(),round(reward,6),round(Remaining_Length,2),point,np.around(position,decimals=2),action.item(),str(collision_info.has_collided)])
                     total_step += 1
                     ep_time = time.time()
                     t=(ep_time - start_time)
