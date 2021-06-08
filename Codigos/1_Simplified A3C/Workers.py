@@ -28,7 +28,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,7).double()           # local network
-        torch.manual_seed(args.points + id)
+        torch.manual_seed(1)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
         done=True
@@ -63,7 +63,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
             time.sleep(1)
 
                 #####################   STEPS  ############################
-            contador+=1
             total_step = 1
             start_time=time.time()
             t=0

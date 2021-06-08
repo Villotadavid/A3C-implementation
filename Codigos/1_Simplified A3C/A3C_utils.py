@@ -184,7 +184,7 @@ def guess_stuck (position):
 
 def Compute_reward(collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
 
-
+    num=0
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     stuck=guess_stuck (position)
     if collision_info.has_collided or stuck or L>=60:
