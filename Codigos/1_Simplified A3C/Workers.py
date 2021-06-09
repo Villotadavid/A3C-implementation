@@ -40,7 +40,6 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
-            trajectory = Trajectory_Generation(args.points, 20, -20)
             client_start(client)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
@@ -115,12 +114,11 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
 
 
-
+            R = torch.zeros(1, 1)
             if not done:
                 value, _, _ = lnet((torch.tensor([delta]), (hx, cx)))
                 R = value.detach()
-                
-            R = torch.zeros(1, 1)
+
             values.append(R)
             policy_loss = 0
             value_loss = 0

@@ -10,7 +10,8 @@ plt.style.use('ggplot')
 df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Training_data_340-3420.csv',delimiter=';')
 add=[df1,df2]
 df=pandas.concat(add)'''
-df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/6_threads/Training_data_2.csv',delimiter=';')
+#df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/6_threads/Training_data_2.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_3.csv',delimiter=';')
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
