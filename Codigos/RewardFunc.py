@@ -26,17 +26,25 @@ def Compute_reward(collision_info ,col_prob ,L ):      #The position should be t
             #R_l=0.5**(0.15*L)
             print (L, R_l)
         R=R_l
-     
-    
-    '''if prev_reward>R:
-        R=R-2
-    else:
-        R=R+2'''
-        
+
     prev_reward=R
     
     return R
 
+
+def Adaptative_reward(collision_info, L, Epoch,Tendencia):  # The position should be the output of the neural network
+
+    if collision_info or L >= 80:
+        R = -1
+    elif L <= 2:
+        R = 1
+    else:
+        if Tendencia:
+            R = (-L / 40 + 1)**(1+Epoch/1000)
+            #print ((1+Epoch/100),(-L / 40 + 1))
+        else:
+            R = (-L / 40 + 1)**(1-Epoch/100)
+    return R
 
 
 if __name__=='__main__':
@@ -49,13 +57,16 @@ if __name__=='__main__':
     x=[]
     
     n=1
-    
-    for t in sin:
-        R.append(Compute_reward( collision_info, col_prob, t))
-        x.append(n)
-        n+=1
-    
-    fig,(ax1,ax2) = plt.subplots(1,2)
-    ax1.plot(x,sin)
-    ax2.plot(x,R)
+    Tendencia=True
+
+    R=[None]*1
+    for epoch in range(0, 1):
+        for t in sin:
+            #R[epoch].append(Adaptative_reward( collision_info, t,1,Tendencia))
+            print (t,Adaptative_reward( collision_info, t,1,Tendencia))
+
+
+        #print (np.linspace(0,len(sin),len(sin)), R)
+        plt.plot(np.linspace(0,len(sin),len(sin)), R[epoch])
+
     plt.show()

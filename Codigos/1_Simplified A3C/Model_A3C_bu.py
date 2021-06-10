@@ -41,10 +41,10 @@ class Net(nn.Module):
         self.Fully1=nn.Linear(32*8*8,16)
         self.ReLu=nn.ReLU()
 
-        self.lstm = nn.LSTMCell(16, 128)
+        self.lstm = nn.LSTMCell(16, 256)
 
-        self.critic_linear = nn.Linear(128, 1)
-        self.actor_linear = nn.Linear(128, num_outputs)
+        self.critic_linear = nn.Linear(256, 1)
+        self.actor_linear = nn.Linear(256, num_outputs)
 
         self.apply(weights_init)
 
