@@ -45,8 +45,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
             lnet.load_state_dict(shared_model.state_dict())
 
             if done:
-                cx = torch.zeros(1, 256)
-                hx = torch.zeros(1, 256)
+                cx = torch.zeros(1, 128)
+                hx = torch.zeros(1, 128)
             else:
                 cx = cx.detach()
                 hx = hx.detach()
