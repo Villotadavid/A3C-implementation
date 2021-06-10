@@ -128,9 +128,9 @@ def weights_init(m):
 
 ############################# DONE #############################
 
-def isDone(reward,collision,num):
+def isDone(reward,collision):
     done = 0
-    if reward <= -1 or collision.has_collided==True or reward==num:
+    if reward <= -1 or collision.has_collided==True:
         done = 1
     return done
 

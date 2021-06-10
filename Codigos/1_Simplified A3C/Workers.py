@@ -92,7 +92,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
                     reward, Remaining_Length = Compute_reward( collision_info, point, position, contador)
 
-                    done = isDone(reward, collision_info,len(trajectory))
+                    done = isDone(reward, collision_info)
                     values.append(value)
                     log_probs.append(log_prob)
                     rewards.append(reward)
