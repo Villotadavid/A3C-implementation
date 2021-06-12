@@ -11,7 +11,7 @@ import threading
 from RandomTrajectory import Trajectory_Generation
 
 MAX_EP = 3000
-MAX_EP_TIME = 30
+MAX_EP_TIME = 15
 
 #seed=1
 
