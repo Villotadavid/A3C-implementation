@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import torchvision.transforms as T
 import numpy as np
+from torchsummary import summary
 
 # Initializing and setting the variance of a tensor of weights
 def normalized_columns_initializer(weights, std=1.0):
@@ -36,9 +37,6 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.Fully2=nn.Linear(3,16)
-        self.Fully4 = nn.Linear(32, 9)
-        self.ReLu = nn.ReLU()
-        self.Fully1=nn.Linear(32*8*8,16)
         self.ReLu=nn.ReLU()
 
         self.lstm = nn.LSTMCell(16, 128)
@@ -67,7 +65,6 @@ class Net(nn.Module):
         delta, (hx, cx) = inputs
         (hx, cx)=(hx.double(), cx.double())
         delta=delta.double()
-
 
         delta=self.Fully2(delta)
         delta=self.ReLu(delta)

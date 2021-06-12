@@ -10,9 +10,8 @@ from ctypes import c_bool
 import threading
 from RandomTrajectory import Trajectory_Generation
 
-MAX_EP = 100000
-MAX_EP_TIME = 10
-UPDATE_GLOBAL_ITER=10
+MAX_EP = 3000
+MAX_EP_TIME = 30
 
 #seed=1
 
@@ -28,7 +27,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
         lnet = Net(1,7).double()           # local network
-        torch.manual_seed(1)
+        torch.manual_seed(1+id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
         done=True
@@ -92,7 +91,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
 
                     reward, Remaining_Length = Compute_reward( collision_info, point, position, contador)
 
-                    done = isDone(reward, collision_info)
+                    done = isDone(reward, collision_info,position)
                     values.append(value)
                     log_probs.append(log_prob)
                     rewards.append(reward)
@@ -124,11 +123,18 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
             value_loss = 0
             gae = torch.zeros(1, 1)
             maxim = len(rewards)
+            print (maxim)
+            print(len(values))
+            print(len(log_probs))
+            print(len(rewards))
+            print (t)
+            print ('------')
             if maxim<=20:
                 inf=0
             else:
                 inf=len(rewards)-20
             for i in reversed(range(inf,maxim-1)):
+                print (i)
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
