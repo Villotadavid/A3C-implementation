@@ -123,18 +123,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,ep_start):
             value_loss = 0
             gae = torch.zeros(1, 1)
             maxim = len(rewards)
-            print (maxim)
-            print(len(values))
-            print(len(log_probs))
-            print(len(rewards))
-            print (t)
-            print ('------')
+
             if maxim<=20:
                 inf=0
             else:
                 inf=len(rewards)-20
             for i in reversed(range(inf,maxim-1)):
-                print (i)
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]
                 value_loss = value_loss + 0.5 * advantage.pow(2)
