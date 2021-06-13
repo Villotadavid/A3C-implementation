@@ -138,7 +138,7 @@ def isDone(reward,collision):
 
 def interpret_action(action):
 
-    linear_scaling_factor = 1
+    linear_scaling_factor = 0.6
     if action == 0:
         quad_offset = (0, 0, +linear_scaling_factor)
     elif action == 1:
