@@ -11,7 +11,7 @@ df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/2_threads/Train
 add=[df1,df2]
 df=pandas.concat(add)'''
 #df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/6_threads/Training_data_2.csv',delimiter=';')
-df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_9.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Training_data_0.csv',delimiter=';')
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
@@ -30,8 +30,12 @@ for i in range (0,Muestra_Ep):
     length[i]=np.mean(df.Remaining_Length[(df.Episodio==i)])
     
 Success=df.Episodio[(df.Rewards==1)]
+Fail=df.Episodio[(df.Rewards==-1)]
+print ('Success')
 print (Success)
-        
+print ('Fail')
+print (Fail)
+                
     
 plt.plot(x,length,label='R.Length')
 plt.legend(loc="upper left")
@@ -47,8 +51,8 @@ plt.show()
 
 
 #%% ################## PLOT DE UN HILO ###############################
-Muestra_Ep=40
-
+Muestra_Ep=1159
+ep765= (df.Rewards[(df.Episodio==768)])
 Hilo='w0'
 step_num=max(df.Step[(df.Episodio==Muestra_Ep)])
 Val=df.Values[(df.Episodio==Muestra_Ep)&(df.Hilo==Hilo)]
