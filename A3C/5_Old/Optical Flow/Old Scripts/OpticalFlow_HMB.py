@@ -26,7 +26,8 @@ def flowToDisplay (flow,maxi):
 	print 'Gen max: '+str(round(maxi,3))+'   frame max: '+str(round(np.max(mag),3))
 	#hsv = rgb
 	#hsv[...,0] = ang*180/np.pi/2
-	#hsv[...,1] = 1
+	hsv[..., 2] = 1
+	#hsv[...,2] = 1
 	#rgb = cv2.normalize(mag,None,0,1,cv2.NORM_MINMAX) 
 	#bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
 	return [rgb,maxi]
