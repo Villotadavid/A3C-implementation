@@ -4,11 +4,7 @@ import ImgProc as proc
 from Model_A3C import Net
 from A3C_utils import *
 import csv
-import psutil
-from multiprocessing import Value
-from ctypes import c_bool
-import threading
-import cv2 as cv
+
 
 MAX_EP = 100000
 MAX_EP_TIME = 30
@@ -27,7 +23,7 @@ def ensure_shared_grads(model, shared_model):
 def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         name='w%i' % id
         ip='127.0.0.' + str(id + 1)
-        lnet = Net(1,7).double()           # local network
+        lnet = Net(3,7).double()           # local network
         torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
@@ -38,6 +34,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         client=first_start(ip)
         prev = np.zeros((128, 128))
         imgOF = np.zeros((128, 128))
+        imgFin = np.zeros((256, 128,3))
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
@@ -70,7 +67,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 # Observe new state
                 img, state,w,h = proc.get_image(client)
                 imgOF=Opticalflow(prev, img)
-                cv.imshow('img',img)
+                imgOF=proc.Process_IMG(imgOF)
+                #imgFin[0:128,0:128,0]=img
+                #imgFin[0:128, 0:128, 1] = img
+                #imgFin[0:128, 0:128, 2] = img
+                #imgFin[128:256, 0:128,:]=imgOF
+                #cv.imshow('img',imgOF)
+                #cv.waitKey(3)
                 prev=img
 
                 data = client.getMultirotorState()
@@ -78,7 +81,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
-                value,policy,(hx,cx) = lnet((state,torch.tensor([delta]),(hx ,cx)))
+                value,policy,(hx,cx) = lnet((imgOF,torch.tensor([delta]),(hx ,cx)))
 
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
@@ -124,7 +127,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
 
 
             if not done:
-                value, _, _ = lnet((state,torch.tensor([delta]), (hx, cx)))
+                value, _, _ = lnet((imgOF,torch.tensor([delta]), (hx, cx)))
                 R = value.detach()
                 
             R = torch.zeros(1, 1)

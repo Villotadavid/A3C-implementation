@@ -46,7 +46,7 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=0
+    server=1
     seed=1
     if server:
         num_workers = 1
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    shared_model = Net(1,7).double()
+    shared_model = Net(3,7).double()
     shared_model.share_memory()
     #if server:
     #    shared_model.load_state_dict(torch.load('C:/Users/davillot/Documents/GitHub/Doctorado/Codigos/Weights_720.pt'))

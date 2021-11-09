@@ -95,7 +95,12 @@ def get_image(client):
     img = cv2.resize(img, (128, 128))
     # np.array could be dispensable
 
-    return img, process(img/np.max(img)).unsqueeze(0).to('cpu'),w,h
+    return img*255, process(img/np.max(img)).unsqueeze(0).to('cpu'),w,h
+
+def Process_IMG(img):
+    process = T.Compose([T.ToTensor()])
+    return process(img / np.max(img)).unsqueeze(0).to('cpu')
+
 
 '''if __name__=='__main__':
     data_image()'''

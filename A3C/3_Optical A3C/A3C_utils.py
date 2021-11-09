@@ -202,9 +202,6 @@ def flowToDisplay(flow):
 
 def Opticalflow(prev, frameGray):
 
-    print (frameGray)
-    print (prev)
-    print ('+++++++++++')
     uflow = cv2.calcOpticalFlowFarneback(prev, frameGray, None, 0.4, 2, 15, 3, 8, 1, 0);
     rgb = flowToDisplay(uflow)
 
