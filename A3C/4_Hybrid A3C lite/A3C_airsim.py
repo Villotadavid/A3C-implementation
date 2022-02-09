@@ -82,10 +82,8 @@ if __name__ == "__main__":
             csvopen.close()
         name += 1
 
-    for i in range (0,num_workers):
-        create_env(i,server)
+    create_env(server)
 
-    #checker=client_check(num_workers)
     for name in range(0, num_workers):
         p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server,PID[name]))
         p.start()

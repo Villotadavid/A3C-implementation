@@ -12,12 +12,12 @@ plt.style.use('ggplot')
 #df=pandas.concat(add)'''
 #df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/6_threads/Training_data_2.csv',delimiter=';')
 
-df2=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/Analisis/Linearvel=06/Training_data_0_6_g.csv',delimiter=';')
+df=pandas.read_csv('C:/Users/usuario/Desktop/Doctorado/A3C_Implementation/A3C/Training_data_0.csv',delimiter=';')
 
 #Time,Hilo,Episodio,Step,Values,log_prob,Rewards,Remaining_Length,Point,Position,Action,Colision,%CPU,%Memoria,Width,Height
 
 ################## MEDIAS POR EPISODIO ###############################
-'''
+
 total=int(df.iloc[-1].Episodio)
 Muestra_Ep=total
 media=np.array([None]*Muestra_Ep)
@@ -32,8 +32,8 @@ for i in range (0,Muestra_Ep):
     logs[i]=np.mean(df.log_prob[(df.Episodio==i)])
     length[i]=np.mean(df.Remaining_Length[(df.Episodio==i)])
     
-Success=df2.Episodio[(df2.Rewards==1)]
-Fail=df2.Episodio[(df2.Rewards==-1)]
+Success=df.Episodio[(df.Rewards==1)]
+Fail=df.Episodio[(df.Rewards==-1)]
 print ('Success')
 print (Success)
 print ('Fail')
@@ -52,7 +52,7 @@ plt.plot(x,reward,label='Reward')
 plt.legend(loc="upper left")
 plt.show()
 
-'''
+
 #%% ################## PLOT DE UN HILO ###############################
 '''
 Muestra_Ep=2822
