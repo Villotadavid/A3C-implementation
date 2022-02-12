@@ -45,19 +45,17 @@ def get_PID(PIDs,n):
             pass
     return PID
 
-def first_start(VehicleName,id):
-
+def first_start():
     client = airsim.MultirotorClient()
     client.confirmConnection()
-    pose = airsim.Pose(airsim.Vector3r(0, 2*id, 0),airsim.Quaternionr(0, 0, 0, 0))
-    client.enableApiControl(True,VehicleName)
+    client.reset()
+    
     return client
 
-def client_start(client):
+def client_start(client, VehicleName):
 
-    client.reset()
-    client.enableApiControl(True)
-    client.takeoffAsync().join()
+    client.enableApiControl(True,VehicleName)
+    client.takeoffAsync(1,VehicleName).join()
 
 
 ######################## CLIENT check ########################################

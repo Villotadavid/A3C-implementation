@@ -35,12 +35,12 @@ class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs):
         super(Net, self).__init__()
 
-        self.conv1w = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-        self.conv2w = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv1w = nn.Conv2d(1, 64, 3, stride=2, padding=1)
+        self.conv2w = nn.Conv2d(64, 32, 3, stride=2, padding=1)
         self.conv3w = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4w = nn.Conv2d(32, 32, 3, stride=2, padding=1)
 
-        self.conv1o = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
+        self.conv1o = nn.Conv2d(1, 32, 3, stride=2, padding=1)
         self.conv2o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv3o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
@@ -77,18 +77,14 @@ class Net(nn.Module):
 
         img,ImgOF,delta, (hx, cx) = inputs
         (hx, cx)=(hx.double(), cx.double())
-        #img = img.double()
+        img = img.double()
         #ImgOF=ImgOF.double()
         delta=delta.double()
 
         x = F.elu(self.conv1w(img))
-        print (x.size())
         x = F.elu(self.conv2w(x))
-        print (x.size())
         x = F.elu(self.conv3w(x))
-        print (x.size())
         x = F.elu(self.conv4w(x))
-        print (x.size())
         x = x.view(-1, 32 * 8 * 8)
 
         delta=self.Fully2(delta)

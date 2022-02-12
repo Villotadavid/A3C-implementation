@@ -83,9 +83,10 @@ if __name__ == "__main__":
         name += 1
 
     create_env(server)
-
+    client=first_start()
     for name in range(0, num_workers):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server))
+        p = mp.Process(target=Worker, args=(lock,counter, 
+            name,shared_model,args,csv_file,server))
         p.start()
         processes.append(p)
     [p.join() for w in processes]

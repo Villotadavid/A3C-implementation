@@ -23,7 +23,8 @@ def ensure_shared_grads(model, shared_model):
 def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
         name='w%i' % id
         VehicleName='Drone' + str(id + 1)
-        lnet = Net(3,7).double()           # local network
+        print (VehicleName)
+        lnet = Net(1,7).double()           # local network
         torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
@@ -31,15 +32,15 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
         num_ep=0
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 20, 20, -20
-        client=first_start(VehicleName,id)
+        print ('start drone...')
+        client = airsim.MultirotorClient()
         prev = np.zeros((128, 128))
         imgOF = np.zeros((128, 128))
-        imgFin = np.zeros((256, 128,3))
 
         while num_ep < MAX_EP:
             print (name+'--> Episiodio nº: '+str(num_ep))
 
-            client_start(client)
+            client_start(client,VehicleName)
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
 
@@ -56,31 +57,34 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             entropies = []
 
             total_step = 1
-            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0),vehicle_name=name)
+            print ('Moving drone....')
+            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, 
+                airsim.YawMode(False, 0),vehicle_name=VehicleName)
             time.sleep(1)
 
             #####################   STEPS  ############################
-
+            
             start_time=time.time()
             t=0
             while t <= MAX_EP_TIME and total_step <= 200:
                 # Observe new state
                 img, state,w,h = proc.get_image(client,VehicleName)
-                imgOF=Opticalflow(prev, img)
-                imgOF=proc.Process_IMG(imgOF)
+                #imgOF=Opticalflow(prev, img)
+                #imgOF=proc.Process_IMG(imgOF)
                 #imgFin[0:128,0:128,0]=img
                 #imgFin[0:128, 0:128, 1] = img
                 #imgFin[0:128, 0:128, 2] = img
                 #imgFin[128:256, 0:128,:]=imgOF
                 #cv.imshow('img',imgOF)
                 #cv.waitKey(3)
-                prev=img
+                #prev=img
 
                 data = client.getMultirotorState(vehicle_name=VehicleName)
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
+                img=torch.reshape(torch.tensor([img]),shape=(1,1,128,128))
                 value,policy,(hx,cx) = lnet((img,img,torch.tensor([delta]),(hx ,cx)))
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
@@ -91,16 +95,17 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 log_prob = log_prob.gather(1, action)
 
                 collision_info = client.simGetCollisionInfo(vehicle_name=VehicleName)
+
                 quad_vel = client.getMultirotorState(vehicle_name=VehicleName).kinematics_estimated.linear_velocity
 
                 quad_offset=interpret_action(action)
-
                 client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2,vehicle_name=VehicleName)
 
 
                 reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
+                print (VehicleName,  reward, collision_info.has_collided, Remaining_Length)
                 values.append(value)
                 log_probs.append(log_prob)
                 rewards.append(reward)
@@ -118,7 +123,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 if done:
                     break
 
-
+            '''
             with lock:
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
@@ -150,11 +155,13 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
                 #print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
             optimizer.zero_grad()
-            #print (policy_loss + args.value_loss_coef * value_loss)
+            print (policy_loss,args.value_loss_coef * value_loss)
             (policy_loss + args.value_loss_coef * value_loss).backward()
             torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 
             ensure_shared_grads(lnet, shared_model)
             optimizer.step()
-            num_ep+=1
+            
             #a.join()
+            '''
+            num_ep+=1
