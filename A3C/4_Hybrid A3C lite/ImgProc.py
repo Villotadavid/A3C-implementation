@@ -76,9 +76,9 @@ def Drone_Vision(png_image):
 
 
 
-def get_image(client):
+def get_image(client,VehicleName):
     process = T.Compose([T.ToTensor()])
-    responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,pixels_as_float=True)])
+    responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,pixels_as_float=True)],vehicle_name=VehicleName)
     response = responses[0]
     w,h=response.width,response.height
     try:
@@ -87,7 +87,7 @@ def get_image(client):
         print ('ALERTA')
         ping = client.ping()
         print ('ERROR -> Ping: '+str(ping))
-        responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis, pixels_as_float=True)])
+        responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis, pixels_as_float=True)],vehicle_name=VehicleName)
         response = responses[0]
         img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
 

@@ -20,7 +20,7 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
+def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
         name='w%i' % id
         VehicleName='Drone' + str(id + 1)
         lnet = Net(3,7).double()           # local network
@@ -31,7 +31,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
         num_ep=0
         point = np.empty([3], dtype=np.float32)
         point[0], point[1], point[2] = 20, 20, -20
-        client=first_start(VehicleName)
+        client=first_start(VehicleName,id)
         prev = np.zeros((128, 128))
         imgOF = np.zeros((128, 128))
         imgFin = np.zeros((256, 128,3))
@@ -56,7 +56,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             entropies = []
 
             total_step = 1
-            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0))
+            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0),vehicle_name=name)
             time.sleep(1)
 
             #####################   STEPS  ############################
@@ -65,7 +65,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
             t=0
             while t <= MAX_EP_TIME and total_step <= 200:
                 # Observe new state
-                img, state,w,h = proc.get_image(client)
+                img, state,w,h = proc.get_image(client,VehicleName)
                 imgOF=Opticalflow(prev, img)
                 imgOF=proc.Process_IMG(imgOF)
                 #imgFin[0:128,0:128,0]=img
@@ -76,13 +76,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 #cv.waitKey(3)
                 prev=img
 
-                data = client.getMultirotorState()
+                data = client.getMultirotorState(vehicle_name=VehicleName)
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
-                value,policy,(hx,cx) = lnet((imgOF,torch.tensor([delta]),(hx ,cx)))
-
+                value,policy,(hx,cx) = lnet((img,img,torch.tensor([delta]),(hx ,cx)))
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
                 entropy = -(log_prob * prob).sum(1, keepdim=True)  # .sum-> Suma los valores de todos los elementos
@@ -91,12 +90,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server,PID):
                 action = prob.multinomial(num_samples=1).detach()  #detach-> no further tracking of operations. No more gradients
                 log_prob = log_prob.gather(1, action)
 
-                collision_info = client.simGetCollisionInfo()
-                quad_vel = client.getMultirotorState().kinematics_estimated.linear_velocity
+                collision_info = client.simGetCollisionInfo(vehicle_name=VehicleName)
+                quad_vel = client.getMultirotorState(vehicle_name=VehicleName).kinematics_estimated.linear_velocity
 
                 quad_offset=interpret_action(action)
 
-                client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2)
+                client.moveByVelocityAsync(quad_vel.x_val+quad_offset[0], quad_vel.y_val+quad_offset[1],quad_vel.z_val+quad_offset[2], 2,vehicle_name=VehicleName)
 
 
                 reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)

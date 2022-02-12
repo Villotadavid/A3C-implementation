@@ -68,15 +68,15 @@ if __name__ == "__main__":
     name=0
     File=True
     log=[]
-    PID=[None]*num_workers
     while File:
-        File=os.path.exists('Training_data_'+str(name)+'.csv')
+        logname='Training_data_'+str(name)+'.csv'
+        File=os.path.exists(logname)
 
         if File:
-            pass
+            os.remove(logname)
         else:
-            csv_file='Training_data_'+str(name) + '.csv'
-            csvopen = open('Training_data_' + str(name) + '.csv', 'w', newline='')
+            csv_file=logname
+            csvopen = open(logname, 'w', newline='')
             csvfile = csv.writer(csvopen, delimiter=';')
             csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision'])
             csvopen.close()
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     create_env(server)
 
     for name in range(0, num_workers):
-        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server,PID[name]))
+        p = mp.Process(target=Worker, args=(lock,counter, name,shared_model,args,csv_file,server))
         p.start()
         processes.append(p)
     [p.join() for w in processes]

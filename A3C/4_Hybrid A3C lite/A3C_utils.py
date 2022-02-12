@@ -19,20 +19,14 @@ prev_position=[0,0,0]
 
 def create_env(server):
 
-
     if server:
         sett_dir = 'C:/Users/davillot/Documents/AirSim'
-    else:
-        sett_dir = 'C:/Users/usuario/Documents/AirSim'
-
-    sett_name='/settings.json'
-    os.rename(sett_dir+sett_name, sett_dir+'/settings.json')
-    
-    if server:
         p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat', stdout=subprocess.PIPE)
     else:
-        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/run.bat', stdout=subprocess.PIPE)
+        sett_dir = 'C:/Users/usuario/Documents/AirSim'
+        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/run.bat')
 
+        
 
 def get_PID(PIDs,n):
     PID=0
@@ -51,10 +45,11 @@ def get_PID(PIDs,n):
             pass
     return PID
 
-def first_start(VehicleName):
+def first_start(VehicleName,id):
 
     client = airsim.MultirotorClient()
     client.confirmConnection()
+    pose = airsim.Pose(airsim.Vector3r(0, 2*id, 0),airsim.Quaternionr(0, 0, 0, 0))
     client.enableApiControl(True,VehicleName)
     return client
 
