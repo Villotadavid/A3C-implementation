@@ -78,7 +78,7 @@ class Net(nn.Module):
         img,ImgOF,delta, (hx, cx) = inputs
         (hx, cx)=(hx.double(), cx.double())
         img = img.double()
-        #ImgOF=ImgOF.double()
+     
         delta=delta.double()
 
         x = F.elu(self.conv1w(img))

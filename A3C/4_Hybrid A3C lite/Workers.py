@@ -4,6 +4,7 @@ import ImgProc as proc
 from Model_A3C import Net
 from A3C_utils import *
 import csv
+import airsim 
 
 
 MAX_EP = 100000
@@ -51,13 +52,15 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 cx = cx.detach()
                 hx = hx.detach()
 
-            values = []
-            log_probs = []
-            rewards = []
-            entropies = []
+            values = np.zeros(200)
+            log_probs = np.zeros(200)
+            rewards = np.zeros(200)
+            entropies = np.zeros(200)
 
             total_step = 1
             print ('Moving drone....')
+            client.simSetVehiclePose(airsim.Vector3r(0,0,0),True,vehicle_name=VehicleName)
+            time.sleep(1)
             client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, 
                 airsim.YawMode(False, 0),vehicle_name=VehicleName)
             time.sleep(1)
@@ -66,7 +69,10 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             
             start_time=time.time()
             t=0
+            done=False
+
             while t <= MAX_EP_TIME and total_step <= 200:
+                print (name,t,total_step)
                 # Observe new state
                 img, state,w,h = proc.get_image(client,VehicleName)
                 #imgOF=Opticalflow(prev, img)
@@ -84,12 +90,12 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                             data.kinematics_estimated.position.z_val]
 
                 delta = np.array(point - position, dtype='float32')
-                img=torch.reshape(torch.tensor([img]),shape=(1,1,128,128))
-                value,policy,(hx,cx) = lnet((img,img,torch.tensor([delta]),(hx ,cx)))
+                img=torch.reshape(torch.tensor(img),shape=(1,1,128,128))
+                value,policy,(hx,cx) = lnet((img,img,torch.reshape(torch.tensor(delta),(1,3)),(hx ,cx)))
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
                 entropy = -(log_prob * prob).sum(1, keepdim=True)  # .sum-> Suma los valores de todos los elementos
-                entropies.append(entropy)
+                entropies[total_step]=entropy
 
                 action = prob.multinomial(num_samples=1).detach()  #detach-> no further tracking of operations. No more gradients
                 log_prob = log_prob.gather(1, action)
@@ -105,10 +111,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 reward, Remaining_Length = Compute_reward(img, collision_info, point, position, 1)
 
                 done = isDone(reward, collision_info, Remaining_Length)
-                print (VehicleName,  reward, collision_info.has_collided, Remaining_Length)
-                values.append(value)
-                log_probs.append(log_prob)
-                rewards.append(reward)
+                values[total_step]=value
+                log_probs[total_step]=log_prob
+                rewards[total_step]=reward
 
                 with lock:
                     counter.value += 1
@@ -121,6 +126,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 ep_time = time.time()
                 t=(ep_time - start_time)
                 if done:
+                    print ('break')
                     break
 
             '''
