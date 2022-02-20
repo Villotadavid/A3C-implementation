@@ -30,28 +30,43 @@ def weights_init(m):
         m.bias.data.fill_(0) # initializing all the bias with zeros
 
 # Making the A3C brain
+class ResidualBlock(nn.Module):
+    def __init__(self):
+        super().__init__() 
+
+        self.conv1 = nn.Conv2d(1, 32, 3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv4 = nn.Conv2d(32, 32, 3, stride=4, padding=1)
+        self.downsample = nn.Sequential(
+                nn.Conv2d(1, 32, 3,  stride=16, padding=1),
+                nn.BatchNorm2d(32)
+            )
+        self.ReLu = nn.ReLU()
+
+    def forward(self, x):
+        
+        identity = x
+        x = F.elu(self.conv1(x))
+        x = F.elu(self.conv3(x))
+        x = F.elu(self.conv4(x))
+        identity = self.downsample(identity)
+        x += identity
+        x = self.ReLu(x)
+        return x
+
 
 class Net(nn.Module):
     def __init__(self, num_inputs, num_outputs):
         super(Net, self).__init__()
 
-        self.conv1w = nn.Conv2d(1, 64, 3, stride=2, padding=1)
-        self.conv2w = nn.Conv2d(64, 32, 3, stride=2, padding=1)
-        self.conv3w = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4w = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-
-        self.conv1o = nn.Conv2d(1, 32, 3, stride=2, padding=1)
-        self.conv2o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv3o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4o = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-
         self.Normalization = nn.BatchNorm2d([1,3,128,128])
         self.ReLu = nn.ReLU()
-
+        self.Resn=ResidualBlock()
+        self.ResOF=ResidualBlock()
         self.Fully2=nn.Linear(3,16)
         self.Fully4 = nn.Linear(32, 9)
         self.Fully1=nn.Linear(32*8*8,16)
-        self.lstm = nn.LSTMCell(32, 256)
+        self.lstm = nn.LSTMCell(48, 256)
 
         self.critic_linear = nn.Linear(256, 1)
         self.actor_linear = nn.Linear(256, num_outputs)
@@ -77,15 +92,16 @@ class Net(nn.Module):
 
         img,ImgOF,delta, (hx, cx) = inputs
         (hx, cx)=(hx.double(), cx.double())
+
         img = img.double()
-     
+        imgOF = img.double()
         delta=delta.double()
 
-        x = F.elu(self.conv1w(img))
-        x = F.elu(self.conv2w(x))
-        x = F.elu(self.conv3w(x))
-        x = F.elu(self.conv4w(x))
+        x=self.Resn(img)
+        xOF=self.ResOF(imgOF)
+
         x = x.view(-1, 32 * 8 * 8)
+        xOF = xOF.view(-1, 32 * 8 * 8)
 
         delta=self.Fully2(delta)
         delta=self.ReLu(delta)
@@ -93,8 +109,10 @@ class Net(nn.Module):
         x=self.Fully1(x)
         x=self.ReLu(x)
 
-        x = torch.cat((x, delta), dim=1)
+        xOF=self.Fully1(xOF)
+        xOF=self.ReLu(xOF)
 
+        x = torch.cat((x,xOF,delta), dim=1)
         hx, cx = self.lstm(x,(hx,cx))
         x = hx
 
