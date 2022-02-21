@@ -74,7 +74,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             while t <= MAX_EP_TIME and total_step <= 200:
                 print (name,t,total_step)
                 # Observe new state
-                img, state,w,h = proc.get_image(client,VehicleName)
+                img, state,imgOF,stateOF,w,h = proc.get_image(client,VehicleName)
                 #imgOF=Opticalflow(prev, img)
                 #imgOF=proc.Process_IMG(imgOF)
                 #imgFin[0:128,0:128,0]=img

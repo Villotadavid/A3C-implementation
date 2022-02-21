@@ -78,24 +78,29 @@ def Drone_Vision(png_image):
 
 def get_image(client,VehicleName):
     process = T.Compose([T.ToTensor()])
-    responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,pixels_as_float=True)],vehicle_name=VehicleName)
-    response = responses[0]
-    w,h=response.width,response.height
+    responses = client.simGetImages([
+    airsim.ImageRequest("CameraWide", airsim.ImageType.DepthVis,pixels_as_float=True,),
+    airsim.ImageRequest("CameraOF", airsim.ImageType.OpticalFlowVis)])
+    
+    w,h=response[0].width,response[0].height
     try:
-        img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
+        imgWide = airsim.list_to_2d_float_array(imgWide.image_data_float, imgWide.width, imgWide.height)
+        imgOF = airsim.list_to_2d_float_array(imgOF.image_data_float, imgOF.width, imgOF.height)
     except:
         print ('ALERTA')
-        ping = client.ping()
-        print ('ERROR -> Ping: '+str(ping))
-        responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis, pixels_as_float=True)],vehicle_name=VehicleName)
-        response = responses[0]
-        img = airsim.list_to_2d_float_array(response.image_data_float, response.width, response.height)
+        responses = client.simGetImages([airsim.ImageRequest(CameraWide, airsim.ImageType.DepthVis, pixels_as_float=True,),
+        airsim.ImageRequest(CameraOF, airsim.ImageType.OpticalFlowVis)],vehicle_name=VehicleName)
+        imgWide = responses[0]
+        imgOF= responses[1]
+        imgWide = airsim.list_to_2d_float_array(imgWide.image_data_float, imgWide.width, imgWide.height)
+        imgOF = airsim.list_to_2d_float_array(imgOF.image_data_float, imgOF.width, imgOF.height)
 
     #img = np.ascontiguousarray(img, dtype=np.float64) / 255
-    img = cv2.resize(img, (128, 128))
+    imgWide = cv2.resize(imgWide, (128, 128))
+    imgOF = cv2.resize(imgOF, (128, 128))
     # np.array could be dispensable
 
-    return img*255, process(img/np.max(img)).unsqueeze(0).to('cpu'),w,h
+    return imgWide*255, process(imgWide/np.max(imgWide)).unsqueeze(0).to('cpu'),imgOF*255, process(imgOF/np.max(imgOF)).unsqueeze(0).to('cpu'),w,h
 
 def Process_IMG(img):
     process = T.Compose([T.ToTensor()])
