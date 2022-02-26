@@ -79,17 +79,19 @@ def Drone_Vision(png_image):
 def get_image(client,VehicleName):
     process = T.Compose([T.ToTensor()])
     responses = client.simGetImages([
-    airsim.ImageRequest("CameraWide", airsim.ImageType.DepthVis,pixels_as_float=True,),
-    airsim.ImageRequest("CameraOF", airsim.ImageType.OpticalFlowVis)])
-    
-    w,h=response[0].width,response[0].height
+    airsim.ImageRequest("CameraOF", 8,False,False),
+    airsim.ImageRequest("CameraWide",0,True,False)],vehicle_name=VehicleName)
+    imgWide = responses[0]
+    imgOF= responses[1]
+    w,h=responses[0].width,responses[0].height
     try:
         imgWide = airsim.list_to_2d_float_array(imgWide.image_data_float, imgWide.width, imgWide.height)
         imgOF = airsim.list_to_2d_float_array(imgOF.image_data_float, imgOF.width, imgOF.height)
     except:
         print ('ALERTA')
         responses = client.simGetImages([airsim.ImageRequest(CameraWide, airsim.ImageType.DepthVis, pixels_as_float=True,),
-        airsim.ImageRequest(CameraOF, airsim.ImageType.OpticalFlowVis)],vehicle_name=VehicleName)
+        airsim.ImageRequest(CameraOF, airsim.ImageType.OpticalFlowVis)])
+
         imgWide = responses[0]
         imgOF= responses[1]
         imgWide = airsim.list_to_2d_float_array(imgWide.image_data_float, imgWide.width, imgWide.height)
