@@ -66,7 +66,7 @@ class Net(nn.Module):
         self.Fully2=nn.Linear(3,16)
         self.Fully4 = nn.Linear(32, 9)
         self.Fully1=nn.Linear(32*8*8,16)
-        self.lstm = nn.LSTMCell(48, 256)
+        self.lstm = nn.LSTMCell(32, 256)
 
         self.critic_linear = nn.Linear(256, 1)
         self.actor_linear = nn.Linear(256, num_outputs)
@@ -90,18 +90,17 @@ class Net(nn.Module):
 
     def forward(self, inputs):
 
-        img,ImgOF,delta, (hx, cx) = inputs
+        img,delta, (hx, cx) = inputs
         (hx, cx)=(hx.double(), cx.double())
-
         img = img.double()
-        imgOF = img.double()
+        #imgOF = img.double()
         delta=delta.double()
 
         x=self.Resn(img)
-        xOF=self.ResOF(imgOF)
+        #xOF=self.ResOF(imgOF)
 
         x = x.view(-1, 32 * 8 * 8)
-        xOF = xOF.view(-1, 32 * 8 * 8)
+        #xOF = xOF.view(-1, 32 * 8 * 8)
 
         delta=self.Fully2(delta)
         delta=self.ReLu(delta)
@@ -109,10 +108,10 @@ class Net(nn.Module):
         x=self.Fully1(x)
         x=self.ReLu(x)
 
-        xOF=self.Fully1(xOF)
-        xOF=self.ReLu(xOF)
+        #xOF=self.Fully1(xOF)
+        #xOF=self.ReLu(xOF)
 
-        x = torch.cat((x,xOF,delta), dim=1)
+        x = torch.cat((x,delta), dim=1)
         hx, cx = self.lstm(x,(hx,cx))
         x = hx
 

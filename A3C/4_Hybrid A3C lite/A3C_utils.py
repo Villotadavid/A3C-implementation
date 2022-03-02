@@ -24,8 +24,8 @@ def create_env(server):
         p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat', stdout=subprocess.PIPE)
     else:
         sett_dir = 'C:/Users/usuario/Documents/AirSim'
-        p = subprocess.Popen('C:/Users/usuario/Documents/Forest/run.bat')
-
+        p = subprocess.Popen('D:/Descargas/LandscapeMountains/WindowsNoEditor/run.bat')
+    time.sleep(5)
         
 
 def get_PID(PIDs,n):
@@ -46,8 +46,11 @@ def get_PID(PIDs,n):
     return PID
 
 def first_start():
+    print ('1')
     client = airsim.MultirotorClient()
+    print ('2')
     client.confirmConnection()
+    print('3')
     client.reset()
     
     return client

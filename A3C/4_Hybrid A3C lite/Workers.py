@@ -72,9 +72,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             done=False
 
             while t <= MAX_EP_TIME and total_step <= 200:
-                print (name,t,total_step)
                 # Observe new state
-                img, state,imgOF,stateOF,w,h = proc.get_image(client,VehicleName)
+                img,w,h = proc.get_image(client,VehicleName)
                 #imgOF=Opticalflow(prev, img)
                 #imgOF=proc.Process_IMG(imgOF)
                 #imgFin[0:128,0:128,0]=img
@@ -89,9 +88,8 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
                             data.kinematics_estimated.position.z_val]
 
-                delta = np.array(point - position, dtype='float32')
-                img=torch.reshape(torch.tensor(img),shape=(1,1,128,128))
-                value,policy,(hx,cx) = lnet((img,img,torch.reshape(torch.tensor(delta),(1,3)),(hx ,cx)))
+                delta = torch.reshape(torch.tensor(np.array(point - position, dtype='float32')),(1,3))
+                value,policy,(hx,cx) = lnet((img,delta,(hx ,cx)))
                 prob = F.softmax(policy, dim=-1) #Eliminar negativos con exponenciales y la suma de todo sea 1.
                 log_prob = F.log_softmax(policy, dim=-1)
                 entropy = -(log_prob * prob).sum(1, keepdim=True)  # .sum-> Suma los valores de todos los elementos
@@ -129,19 +127,19 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                     print ('break')
                     break
 
-            '''
+           
             with lock:
                 if num_ep % 10 == 0:
                     torch.save(lnet.state_dict(),'Weights_' + str(num_ep) + '.pt')
-
+   
 
 
             if not done:
-                value, _, _ = lnet((imgOF,torch.tensor([delta]), (hx, cx)))
+                value, _, _ = lnet((img,delta, (hx, cx)))
                 R = value.detach()
                 
             R = torch.zeros(1, 1)
-            values.append(R)
+            values[total_step+1]=R
             policy_loss = 0
             value_loss = 0
             gae = torch.zeros(1, 1)
@@ -150,6 +148,7 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 inf=0
             else:
                 inf=len(rewards)-20
+            
             for i in reversed(range(inf,maxim-1)):
                 R = args.gamma * R + rewards[i]
                 advantage = R - values[i]
@@ -159,15 +158,14 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
                 delta_t = rewards[i] + args.gamma * values[i + 1] - values[i]
                 gae = gae * args.gamma * args.gae_lambda + delta_t
                 policy_loss = policy_loss - log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
-                #print (R.item(),advantage.item(),value_loss.item(),gae.item(),delta_t.item(),policy_loss.item())
             optimizer.zero_grad()
-            print (policy_loss,args.value_loss_coef * value_loss)
-            (policy_loss + args.value_loss_coef * value_loss).backward()
-            torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
 
-            ensure_shared_grads(lnet, shared_model)
-            optimizer.step()
-            
-            #a.join()
-            '''
-            num_ep+=1
+            if (policy_loss + args.value_loss_coef * value_loss)==0.0:
+                pass
+            else:
+                (policy_loss + args.value_loss_coef * value_loss).backward()
+                torch.nn.utils.clip_grad_norm_(lnet.parameters(), 20 )
+
+                ensure_shared_grads(lnet, shared_model)
+                optimizer.step()
+            num_ep += 1

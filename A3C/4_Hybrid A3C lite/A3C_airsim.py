@@ -46,7 +46,7 @@ parser.add_argument('--no-shared', default=False,
 if __name__ == "__main__":
 
 
-    server=0
+    server=1
     seed=1
     if server:
         num_workers = 1
@@ -84,6 +84,7 @@ if __name__ == "__main__":
 
     create_env(server)
     client=first_start()
+    print ('Hola')
     for name in range(0, num_workers):
         p = mp.Process(target=Worker, args=(lock,counter, 
             name,shared_model,args,csv_file,server))
