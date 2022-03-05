@@ -22,26 +22,33 @@ def ensure_shared_grads(model, shared_model):
 
 
 def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
-        name='w%i' % id
-        VehicleName='Drone' + str(id + 1)
-        print (VehicleName)
+
+        ## Local netowrk definition ##
+
         lnet = Net(1,7).double()           # local network
         torch.manual_seed(args.seed + id)
         optimizer = optim.Adam(shared_model.parameters(), lr=0.0001)
         lnet.train()
+
+        ## Variable definition ##
+
+        name='w%i' % id
+        VehicleName='Drone' + str(id + 1)
         done=True
         num_ep=0
-        point = np.empty([3], dtype=np.float32)
-        point[0], point[1], point[2] = 20, 20, -20
-        print ('start drone...')
-        client = airsim.MultirotorClient()
         prev = np.zeros((128, 128))
         imgOF = np.zeros((128, 128))
+        point=np.empty([1,3],dtype=np.float32)
+
+        client = airsim.MultirotorClient()
 
         while num_ep < MAX_EP:
-            print (name+'--> Episiodio nº: '+str(num_ep))
 
+            print (name+'--> Episiodio nº: '+str(num_ep))
+            point=Trajectory_Generation(1,40,-30)
+            print (name,point)
             client_start(client,VehicleName)
+
             ###########   INICIO EPISODIO  ############################
             lnet.load_state_dict(shared_model.state_dict())
 
@@ -58,15 +65,16 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             entropies = np.zeros(200)
 
             total_step = 1
-            print ('Moving drone....')
-            client.simSetVehiclePose(airsim.Vector3r(0,0,0),True,vehicle_name=VehicleName)
-            time.sleep(1)
-            client.moveToPositionAsync(int(point[0]), int(point[1]), int(point[2]), 4, 3e+38,airsim.DrivetrainType.ForwardOnly, 
+            ## Restart drone position ##
+            client.simSetVehiclePose(airsim.Vector3r(id*3,0,0),True,vehicle_name=VehicleName)
+            #time.sleep(1)
+            client.moveToPositionAsync(point[0], point[1], point[2], 4, 3e+38,airsim.DrivetrainType.ForwardOnly, 
                 airsim.YawMode(False, 0),vehicle_name=VehicleName)
             time.sleep(1)
-
+            client.moveToPositionAsync(point[0], point[1], point[2], 4, 3e+38,airsim.DrivetrainType.ForwardOnly, 
+                airsim.YawMode(False, 0),vehicle_name=VehicleName)
             #####################   STEPS  ############################
-            
+            client.moveByVelocityAsync(0,0,0,0.1,vehicle_name=VehicleName)
             start_time=time.time()
             t=0
             done=False
@@ -74,19 +82,9 @@ def Worker(lock,counter, id,shared_model,args,csvfile_name,server):
             while t <= MAX_EP_TIME and total_step <= 200:
                 # Observe new state
                 img,w,h = proc.get_image(client,VehicleName)
-                #imgOF=Opticalflow(prev, img)
-                #imgOF=proc.Process_IMG(imgOF)
-                #imgFin[0:128,0:128,0]=img
-                #imgFin[0:128, 0:128, 1] = img
-                #imgFin[0:128, 0:128, 2] = img
-                #imgFin[128:256, 0:128,:]=imgOF
-                #cv.imshow('img',imgOF)
-                #cv.waitKey(3)
-                #prev=img
-
                 data = client.getMultirotorState(vehicle_name=VehicleName)
-                position = [data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
-                            data.kinematics_estimated.position.z_val]
+                position = np.array([data.kinematics_estimated.position.x_val, data.kinematics_estimated.position.y_val,
+                            data.kinematics_estimated.position.z_val])
 
                 delta = torch.reshape(torch.tensor(np.array(point - position, dtype='float32')),(1,3))
                 value,policy,(hx,cx) = lnet((img,delta,(hx ,cx)))

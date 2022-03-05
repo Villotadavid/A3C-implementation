@@ -11,9 +11,28 @@ import airsim
 import numpy as np
 import psutil
 import math
+from matplotlib import pyplot as plt
+import numpy as np
+import argparse
+import math
+
 global position
 prev_position=[0,0,0]
 
+###################  TRAJECTORY ##########################################
+
+def Trajectory_Generation(Waypoints,D,Z):
+
+    nwp=Waypoints+2
+    Waypoints=np.empty([3],dtype=np.int)
+    x,y=0,0
+    Alpha=np.random.randint(360)
+    z=np.random.randint(-Z)
+    x=x+D*math.cos(Alpha)
+    y=y+D*math.sin(Alpha)
+    Waypoints=[int(x),int(y),int(-z)]
+
+    return (Waypoints)
 
 ################### CREATE EMVIRONMENTS ##################################
 
@@ -46,11 +65,9 @@ def get_PID(PIDs,n):
     return PID
 
 def first_start():
-    print ('1')
+
     client = airsim.MultirotorClient()
-    print ('2')
     client.confirmConnection()
-    print('3')
     client.reset()
     
     return client
@@ -125,7 +142,8 @@ def isDone(reward,collision,L):
 
 def interpret_action(action):
 
-    linear_scaling_factor = 0.75
+    linear_scaling_factor = 1.5
+    
     if action == 0:
         quad_offset = (0, 0, +linear_scaling_factor)
     elif action == 1:
@@ -153,14 +171,15 @@ def check_loop_finish(loop_finish):
 
 
 def Compute_reward(img ,collision_info ,wp2 ,position,num ):      #The position should be the output of the neural network
+    
     global prev_position
     num=0
-    resta=np.array(position)-np.array(prev_position)
+    resta=position-prev_position
     dist=0.1
     diff=np.array([dist,dist,dist])
     L=math.sqrt((wp2[0]-position[0])*(wp2[0]-position[0])+(wp2[1]-position[1])*(wp2[1]-position[1])+(wp2[2]-position[2])*(wp2[2]-position[2]))
     
-    if collision_info.has_collided or position==prev_position or L>=80:
+    if collision_info.has_collided or np.all(position==prev_position) or L>=80:
         R=-1
     elif L>=40 and L<=80:
         R=-L/40+1

@@ -16,6 +16,8 @@ GAMMA = 0.9
 MAX_EP = 3000
 
 parser = argparse.ArgumentParser(description='A3C')
+parser.add_argument('--server', type=int, default=0,
+                    help='if running in server->1 if not->0')
 parser.add_argument('--lr', type=float, default=0.0001,
                     help='learning rate (default: 0.0001)')
 parser.add_argument('--gamma', type=float, default=0.99,
@@ -45,13 +47,13 @@ parser.add_argument('--no-shared', default=False,
 
 if __name__ == "__main__":
 
-
-    server=1
+    args = parser.parse_args()
+    server=bool(args.server)
     seed=1
     if server:
-        num_workers = 1
+        num_workers = 6
     else:
-        num_workers = 1
+        num_workers = 3
 
     torch.manual_seed(seed)
 
@@ -65,26 +67,25 @@ if __name__ == "__main__":
     counter = mp.Value('i', 0)
     lock = mp.Lock()
     processes = []
-    name=0
     File=True
     log=[]
-    while File:
-        logname='Training_data_'+str(name)+'.csv'
-        File=os.path.exists(logname)
 
-        if File:
-            os.remove(logname)
-        else:
-            csv_file=logname
-            csvopen = open(logname, 'w', newline='')
-            csvfile = csv.writer(csvopen, delimiter=';')
-            csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision'])
-            csvopen.close()
-        name += 1
+    logname='Training_data_0.csv'
+    File=os.path.exists(logname)
+
+    if File:
+         os.remove(logname)
+   
+    csv_file=logname
+    csvopen = open(logname, 'w', newline='')
+    csvfile = csv.writer(csvopen, delimiter=';')
+    csvfile.writerow(['Time','Hilo', 'Episodio', 'Step', 'Values', 'log_prob', 'Rewards', 'Remaining_Length', 'Point', 'Position','Action','Colision'])
+    csvopen.close()
+
 
     create_env(server)
     client=first_start()
-    print ('Hola')
+
     for name in range(0, num_workers):
         p = mp.Process(target=Worker, args=(lock,counter, 
             name,shared_model,args,csv_file,server))
