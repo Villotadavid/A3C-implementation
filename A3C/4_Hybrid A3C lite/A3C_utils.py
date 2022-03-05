@@ -40,7 +40,7 @@ def create_env(server):
 
     if server:
         sett_dir = 'C:/Users/davillot/Documents/AirSim'
-        p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/Forest/Forest/run.bat', stdout=subprocess.PIPE)
+        p = subprocess.Popen('C:/Users/davillot/Doctorado/Environments/AbandonedPark/run.bat', stdout=subprocess.PIPE)
     else:
         sett_dir = 'C:/Users/usuario/Documents/AirSim'
         p = subprocess.Popen('D:/Descargas/LandscapeMountains/WindowsNoEditor/run.bat')
